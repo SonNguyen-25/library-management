@@ -69,19 +69,21 @@ export default function AdminNavbar({ selected = "dashboard" }: { selected?: str
                             <div className={`${getNavLinkClass("manage")} flex items-center gap-1 cursor-pointer`}>
                                 Manage ▾
                             </div>
-                            <div className="absolute top-full left-0 hidden group-hover:flex flex-col bg-white shadow-xl border border-gray-100 rounded-lg w-40 mt-1 overflow-hidden z-50">
-                                <Link to="/admin/manage/books" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 border-b border-gray-50 text-sm">
-                                    Books
-                                </Link>
-                                <Link to="/admin/manage/categories" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 border-b border-gray-50 text-sm">
-                                    Categories
-                                </Link>
-                                <Link to="/admin/manage/authors" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 border-b border-gray-50 text-sm">
-                                    Authors
-                                </Link>
-                                <Link to="/admin/manage/publishers" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 text-sm">
-                                    Publishers
-                                </Link>
+                            <div className="absolute top-full left-0 hidden group-hover:block pt-2 w-40 z-50">
+                                <div className="flex flex-col bg-white shadow-xl border border-gray-100 rounded-lg overflow-hidden">
+                                    <Link to="/admin/manage/books" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 border-b border-gray-50 text-sm">
+                                        Books
+                                    </Link>
+                                    <Link to="/admin/manage/categories" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 border-b border-gray-50 text-sm">
+                                        Categories
+                                    </Link>
+                                    <Link to="/admin/manage/authors" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 border-b border-gray-50 text-sm">
+                                        Authors
+                                    </Link>
+                                    <Link to="/admin/manage/publishers" className="px-4 py-3 hover:bg-purple-50 text-left text-gray-700 text-sm">
+                                        Publishers
+                                    </Link>
+                                </div>
                             </div>
                         </div>
 
