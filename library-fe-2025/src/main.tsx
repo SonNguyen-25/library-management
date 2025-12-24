@@ -19,6 +19,12 @@ import UserDashboard from './pages/user/UserDashboard.tsx'
 import AdminDashboard from './pages/admin/AdminDashboard.tsx'
 import BookManage from "./pages/admin/BookManage.tsx";
 import UserManage from "./pages/admin/UserManage.tsx";
+import RequestsManage from "./pages/admin/RequestsManage.tsx";
+import LoansManage from "./pages/admin/LoansManage.tsx";
+import FinesManage from "./pages/admin/FinesManage.tsx";
+import AuthorManage from "./pages/admin/AuthorManage.tsx";
+import CategoryManage from "./pages/admin/CategoryManage.tsx";
+import PublisherManage from "./pages/admin/PublisherManage.tsx";
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -47,13 +53,13 @@ createRoot(document.getElementById('root')!).render(
                         <Route index element={<Navigate to="dashboard" replace />} />
                         <Route path="dashboard" element={<AdminDashboard />} />
                         <Route path="manage/books" element={<BookManage />} />
+                        <Route path="manage/categories" element={<CategoryManage />} />
+                        <Route path="manage/authors" element={<AuthorManage />} />
+                        <Route path="manage/publishers" element={<PublisherManage />} />
                         <Route path="users" element={<UserManage />} />
-                        {/* <Route path="manage/categories" element={<CategoryManage />} /> */}
-                        {/* <Route path="manage/authors" element={<AuthorManage />} /> */}
-                        {/* <Route path="manage/publishers" element={<PublisherManage />} /> */}
-                        {/* <Route path="loans" element={<LoansManage />} /> */}
-                        {/* <Route path="requests" element={<RequestsManage />} /> */}
-                        {/* <Route path="fines" element={<FinesManage />} /> */}
+                        <Route path="requests" element={<RequestsManage />} />
+                        <Route path="loans" element={<LoansManage />} />
+                        <Route path="fines" element={<FinesManage />} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                 </Routes>

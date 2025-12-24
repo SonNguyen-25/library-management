@@ -14,7 +14,7 @@ export interface BookLoan {
     userUserName: string;
     loanDate: string;           // ISO string format
     dueDate: string;            // ISO string format
-    actualReturnDate: string | null;
+    returnDate: string | null;
     status: LoanStatus;
     loanedAt: string;           // ISO string format
     updatedAt: string;          // ISO string format
@@ -29,7 +29,7 @@ const bookLoans: BookLoan[] = [
         userUserName: "johndoe",
         loanDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
         dueDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-        actualReturnDate: null,
+        returnDate: null,
         status: "BORROWED",
         loanedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
@@ -41,7 +41,7 @@ const bookLoans: BookLoan[] = [
         userUserName: "janedoe",
         loanDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         dueDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-        actualReturnDate: null,
+        returnDate: null,
         status: "BORROWED",
         loanedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -53,7 +53,7 @@ const bookLoans: BookLoan[] = [
         userUserName: "johndoe",
         loanDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         dueDate: new Date().toISOString(),
-        actualReturnDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        returnDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         status: "RETURNED",
         loanedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
@@ -65,7 +65,7 @@ const bookLoans: BookLoan[] = [
         userUserName: "janedoe",
         loanDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
         dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        actualReturnDate: null,
+        returnDate: null,
         status: "BORROWED",
         loanedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date().toISOString(),
