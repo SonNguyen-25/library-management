@@ -1,0 +1,56 @@
+package com.example.libraryBe.service;
+
+import com.example.libraryBe.dto.BookResponse;
+import com.example.libraryBe.entity.Author;
+import com.example.libraryBe.entity.Book;
+import com.example.libraryBe.entity.BookCopy;
+import com.example.libraryBe.entity.Category;
+import com.example.libraryBe.model.BookCopyStatus;
+import com.example.libraryBe.repository.BookCopyRepository;
+import com.example.libraryBe.repository.BookRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class BookService {
+
+    private final BookRepository bookRepository;
+    private final BookCopyRepository bookCopyRepository;
+
+    public List<BookResponse> getAllBooks() {
+        List<Book> books = bookRepository.findAll();
+        return books.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public BookResponse getBookById(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+        return mapToResponse(book);
+    }
+
+    private BookResponse mapToResponse(Book book) {
+        // Kiểm tra xem sách này có bản sao nào AVAILABLE không(tối ưu Query sau)
+        List<BookCopy> copies = bookCopyRepository.findAll();
+        boolean isAvailable = copies.stream()
+                .anyMatch(c -> c.getBook().getId().equals(book.getId())
+                        && c.getStatus() == BookCopyStatus.AVAILABLE);
+
+        return BookResponse.builder()
+                .id(book.getId())
+                .title(book.getTitle())
+                .description(book.getDescription())
+                .coverUrl(book.getCoverUrl())
+                .rating(book.getRating() != null ? book.getRating() : 0.0)
+                .publisherName(book.getPublisher() != null ? book.getPublisher().getName() : "Unknown")
+                .authors(book.getAuthors().stream().map(Author::getName).collect(Collectors.toList()))
+                .categories(book.getCategories().stream().map(Category::getName).collect(Collectors.toList()))
+                .available(isAvailable)
+                .build();
+    }
+}
