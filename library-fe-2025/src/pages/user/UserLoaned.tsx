@@ -2,21 +2,18 @@ import { useState } from 'react';
 import UserNavbar from '../../components/UserNavbar';
 import type { BookLoan } from '../../data/bookLoans';
 import bookLoans from '../../data/bookLoans';
-import authService from "../../services/authService.ts";
+import { useAuth } from '../../hooks/useAuth';
 
-const useAuth = () => {
-    const user = authService.getCurrentUser();
-    return user.username;
-};
 export default function UserLoaned() {
-    const currentUsername = useAuth();
+    const { user } = useAuth();
+    const currentUsername = user?.username;
     const [filterStatus, setFilterStatus] = useState<string>('');
-    const loans = bookLoans.filter(loan => loan.userUserName === currentUsername); // Show sample data
-    
-    const filteredLoans = loans.filter(loan => 
+    const loans = bookLoans.filter(loan => loan.userUserName === currentUsername);
+
+    const filteredLoans = loans.filter(loan =>
         filterStatus ? loan.status === filterStatus : true
     );
-    
+
     const handleRequestReturn = (loan: BookLoan) => {
         alert(`Tính năng trả sách "${loan.bookCopyOriginalBookTitle}" đang được phát triển. Vui lòng quay lại sau!`);
     };
@@ -105,9 +102,9 @@ export default function UserLoaned() {
                                             <p className="text-sm">
                                                 <span className="font-medium">Due Date:</span> {new Date(loan.dueDate).toLocaleDateString()}
                                             </p>
-                                            {loan.actualReturnDate && (
+                                            {loan.returnDate && (
                                                 <p className="text-sm">
-                                                    <span className="font-medium">Returned:</span> {new Date(loan.actualReturnDate).toLocaleDateString()}
+                                                    <span className="font-medium">Returned:</span> {new Date(loan.returnDate).toLocaleDateString()}
                                                 </p>
                                             )}
                                         </div>

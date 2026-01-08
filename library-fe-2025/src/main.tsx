@@ -14,7 +14,7 @@ import UserFines from './pages/user/UserFines.tsx'
 import UserSubscriptions from './pages/user/UserSubscriptions.tsx'
 import NotFound from './pages/404.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
-import { AuthProvider } from './components/AuthProvider.tsx'
+import { AuthProvider } from './context/AuthContext';
 import UserDashboard from './pages/user/UserDashboard.tsx'
 import AdminDashboard from './pages/admin/AdminDashboard.tsx'
 import BookManage from "./pages/admin/BookManage.tsx";

@@ -1,20 +1,15 @@
 import { useState } from 'react';
 import UserNavbar from '../../components/UserNavbar';
 import fines from '../../data/fines';
-import authService from "../../services/authService.ts";
+import { useAuth } from '../../hooks/useAuth';
 
-const useAuth = () => {
-    const user = authService.getCurrentUser();
-    return user.username;
-};
 export default function UserFines() {
-    const currentUsername = useAuth()
+    const { user } = useAuth();
+    const currentUsername = user?.username;
     const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-    const finesList = fines.filter(fine => fine.username === currentUsername); // Show sample data
-    
+    const finesList = fines.filter(fine => fine.username === currentUsername);
     const totalAmount = finesList.reduce((sum, fine) => sum + fine.amount, 0);
-    
     const sortedFines = [...finesList].sort((a, b) => {
         if (sortBy === 'date') {
             const dateA = new Date(a.createdAt).getTime();
@@ -24,7 +19,6 @@ export default function UserFines() {
             return sortDirection === 'asc' ? a.amount - b.amount : b.amount - a.amount;
         }
     });
-    
     const toggleSort = (field: 'date' | 'amount') => {
         if (sortBy === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');

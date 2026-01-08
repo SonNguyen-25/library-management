@@ -7,45 +7,42 @@ import type { Book } from '../../data/books';
 import bookLoans from '../../data/bookLoans';
 import fines from '../../data/fines';
 import booksData from '../../data/books';
-import authService from '../../services/authService';
+import { useAuth } from '../../hooks/useAuth';
 import bookRequests, {type BookRequest} from "../../data/bookRequests.ts";
 import BookCard from "../../components/BookCard.tsx";
 import BookDetailModal from "../../components/BookDetailModal.tsx";
 
 export default function UserDashboard() {
+
+    const { user } = useAuth();
     const [loans, setLoans] = useState<BookLoan[]>([]);
     const [finesList, setFinesList] = useState<Fine[]>([]);
     const [requestsList, setRequestsList] = useState<BookRequest[]>([]);
     const [books, setBooks] = useState<Book[]>([]);
-    const [username, setUsername] = useState('');
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    
-    useEffect(() => {
-        const user = authService.getCurrentUser();
-        const displayName = user?.name || 'Guest';
-        const currentUser =user?.username;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUsername(displayName);
-        // LỌC BookLoans theo userUserName
-        const userLoans = bookLoans.filter(
-            loan => loan.userUserName === currentUser
-        );
 
-        // LỌC Fines theo username
-        const userFines = fines.filter(
-            fine => fine.username === currentUser
-        );
-        const userRequests = bookRequests.filter(
-            userRequests => userRequests.username === currentUser
-        );
-        // Load mock data - show all for demo
-        setLoans(userLoans);
-        setFinesList(userFines);
-        setRequestsList(userRequests)
-        setBooks(booksData.slice(0, 4));
-    }, []);
-    
+    useEffect(() => {
+        if (user) {
+            const currentUsername = user.username;
+            const userLoans = bookLoans.filter(
+                loan => loan.userUserName === currentUsername
+            );
+            const userFines = fines.filter(
+                fine => fine.username === currentUsername
+            );
+
+            const userRequests = bookRequests.filter(
+                req => req.username === currentUsername
+            );
+
+            setLoans(userLoans);
+            setFinesList(userFines);
+            setRequestsList(userRequests);
+            setBooks(booksData.slice(0, 4));
+        }
+    }, [user]);
+
     const activeLoans = loans.filter(loan => loan.status === 'BORROWED').length;
     const pendingRequests = requestsList.filter(userRequests => userRequests.status === 'PENDING').length;
     const totalFines = finesList.reduce((sum, fine) => sum + fine.amount, 0);
@@ -58,7 +55,7 @@ export default function UserDashboard() {
     const handleBorrowBook = (book: Book) => {
         alert(`Tính năng mượn sách "${book.title}" đang được phát triển. Vui lòng quay lại sau!`);
     };
-    
+
     const soonDueBooks = loans
         .filter(loan => {
             if (loan.status !== 'BORROWED') return false;
@@ -69,21 +66,23 @@ export default function UserDashboard() {
             return diffDays >= 0 && diffDays <= 7;
         })
         .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    
+
     return (
         <>
             <title>Library Dashboard</title>
             <UserNavbar selected="home" />
-            
+
             <div className="min-h-screen bg-blue-50 p-6">
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h2 className="text-2xl font-semibold text-blue-700">Welcome, {username}!</h2>
+                    {/* Sử dụng user.name từ Context */}
+                    <h2 className="text-2xl font-semibold text-blue-700">Welcome, {user?.name || 'Guest'}!</h2>
                     <p className="text-gray-600 mt-2">
                         Here's an overview of your library account.
                     </p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    {/* Active Loans Card */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center">
                             <div>
@@ -98,7 +97,8 @@ export default function UserDashboard() {
                         </div>
                         <Link to="/user/loaned" className="block mt-4 text-blue-600 hover:underline">View all loans →</Link>
                     </div>
-                    
+
+                    {/* Pending Requests Card */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center">
                             <div>
@@ -113,7 +113,8 @@ export default function UserDashboard() {
                         </div>
                         <Link to="/user/requests" className="block mt-4 text-blue-600 hover:underline">View all requests →</Link>
                     </div>
-                    
+
+                    {/* Fines Card */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex justify-between items-center">
                             <div>
@@ -129,7 +130,8 @@ export default function UserDashboard() {
                         <Link to="/user/fines" className="block mt-4 text-blue-600 hover:underline">View all fines →</Link>
                     </div>
                 </div>
-                
+
+                {/* Quick Actions */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 className="text-lg font-semibold text-blue-700 mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -153,7 +155,8 @@ export default function UserDashboard() {
                         </Link>
                     </div>
                 </div>
-                
+
+                {/* Soon Due Books */}
                 {soonDueBooks.length > 0 && (
                     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h3 className="text-lg font-semibold text-orange-600 mb-4">Books Due Soon</h3>
@@ -163,7 +166,7 @@ export default function UserDashboard() {
                                 const today = new Date();
                                 const diffTime = dueDate.getTime() - today.getTime();
                                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                
+
                                 return (
                                     <div key={loan.id} className="flex justify-between items-center border-b pb-4">
                                         <div>
@@ -181,7 +184,8 @@ export default function UserDashboard() {
                         </div>
                     </div>
                 )}
-                
+
+                {/* Books You Might Like*/}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold text-blue-700">Books You Might Like</h3>
@@ -189,7 +193,7 @@ export default function UserDashboard() {
                             View all books →
                         </Link>
                     </div>
-                    
+
                     {books.length === 0 ? (
                         <p className="text-gray-500 text-center py-4">No book recommendations available.</p>
                     ) : (

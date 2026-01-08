@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import authService from "../services/authService";
+import { useAuth } from "../hooks/useAuth";
 
 interface NavItem {
     name: string;
@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function AdminNavbar({ selected = "dashboard" }: { selected?: string }) {
+    const { logout } = useAuth();
     const [showNavbar, setShowNavbar] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
     const navigate = useNavigate();
@@ -26,8 +27,8 @@ export default function AdminNavbar({ selected = "dashboard" }: { selected?: str
         setLastScrollY(currentScrollY);
     }, [lastScrollY]);
 
-    const handleLogout = async () => {
-        await authService.logout();
+    const handleLogout = () => {
+        logout();
         navigate('/login');
     };
 

@@ -2,14 +2,11 @@ import { useState } from 'react';
 import UserNavbar from "../../components/UserNavbar";
 import { BookRequestStatusEnum, BookRequestTypeEnum } from '../../data/bookRequests';
 import bookRequests from '../../data/bookRequests';
-import authService from "../../services/authService.ts";
+import { useAuth } from '../../hooks/useAuth';
 
-const useAuth = () => {
-    const user = authService.getCurrentUser();
-    return user.username;
-};
 export default function UserRequest() {
-    const currentUsername = useAuth();
+    const { user } = useAuth();
+    const currentUsername = user?.username;
     const [filterType, setFilterType] = useState<string>('');
     const [filterStatus, setFilterStatus] = useState<string>('');
     const requests = bookRequests.filter(userRequest => userRequest.username === currentUsername);

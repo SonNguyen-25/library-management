@@ -1,186 +1,139 @@
-// Trang Register
-import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '../../hooks/useAuth';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData({ ...formData, [id]: value });
-  };
+    const { register, isLoading } = useAuth();
+    const navigate = useNavigate();
 
-  const validateForm = (): boolean => {
-    // Basic validation
-    if (!formData.name || !formData.username || !formData.email || !formData.password) {
-      setError("All fields are required");
-      return false;
-    }
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return false;
-    }
+        if (password !== confirmPassword) {
+            setError("Mật khẩu nhập lại không khớp!");
+            return;
+        }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Please enter a valid email address");
-      return false;
-    }
+        try {
+            await register({
+                username,
+                password,
+                name,
+                email
+            });
+            // Nếu thành công, AuthContext tự set user và token
+            // Chuyển hướng về trang chủ User
+            navigate("/user/home");
 
-    // Password strength validation
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      return false;
-    }
+        } catch (err: any) {
+            console.error("Register Error:", err);
+            if (typeof err === 'string') {
+                setError(err);
+            } else {
+                setError("Đăng ký thất bại. Username có thể đã tồn tại!");
+            }
+        }
+    };
 
-    return true;
-  };
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 p-4">
+            <div className="bg-white py-8 px-8 rounded-2xl shadow-2xl w-full max-w-md">
 
+                <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
+                    Create Account
+                </h2>
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-lg text-sm text-center">
+                        {error}
+                    </div>
+                )}
 
-    if (!validateForm()) {
-      return;
-    }
+                <form className="flex flex-col space-y-4" onSubmit={handleRegister}>
+                    <div>
+                        <label className="block mb-1 text-gray-700 font-semibold text-sm">Full Name</label>
+                        <input
+                            type="text"
+                            placeholder="Nguyen Van A"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                    </div>
 
-    setLoading(true);
-    setError(null);
+                    <div>
+                        <label className="block mb-1 text-gray-700 font-semibold text-sm">Email</label>
+                        <input
+                            type="email"
+                            placeholder="email@example.com"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
 
-    setTimeout(() => {
-      alert("Tính năng đăng ký đang được phát triển. Vui lòng quay lại sau!");
-      setLoading(false);
-    }, 400);
-  };
+                    <div>
+                        <label className="block mb-1 text-gray-700 font-semibold text-sm">Username</label>
+                        <input
+                            type="text"
+                            placeholder="username123"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
+                    </div>
 
-  return (
-    // Container chính căn giữa trang, nền gradient xanh dương nhẹ nhàng
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 p-4">
-      {/* Box form đăng ký với background trắng, bo góc, shadow */}
-      <div className="bg-white pt-12 pb-8 px-8 rounded-2xl shadow-2xl w-full max-w-md">
+                    <div>
+                        <label className="block mb-1 text-gray-700 font-semibold text-sm">Password</label>
+                        <input
+                            type="password"
+                            placeholder="Enter password"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
 
-        {/* Tiêu đề trang đăng ký */}
-        <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
-          Create an Account
-        </h2>
+                    <div>
+                        <label className="block mb-1 text-gray-700 font-semibold text-sm">Confirm Password</label>
+                        <input
+                            type="password"
+                            placeholder="Re-enter password"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                    </div>
 
-        {/* Display error message if any */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
+                    <button
+                        type="submit"
+                        className={`w-full py-3 rounded-lg font-bold text-white shadow-lg bg-blue-600 hover:bg-blue-700 shadow-blue-200 transition-all ${isLoading ? 'opacity-70' : ''}`}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Creating Account..." : "Register"}
+                    </button>
+                </form>
 
-        {/* Form đăng ký gồm các input nhập thông tin user */}
-        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-          {/* Nhập tên */}
-          <div>
-            <label className="block mb-1 text-gray-700 font-medium" htmlFor="name">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              placeholder="Enter your name"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Nhập tên đăng nhập (username) */}
-          <div>
-            <label className="block mb-1 text-gray-700 font-medium" htmlFor="username">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              value={formData.username}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Nhập email */}
-          <div>
-            <label className="block mb-1 text-gray-700 font-medium" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Nhập mật khẩu */}
-          <div>
-            <label className="block mb-1 text-gray-700 font-medium" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Create a password"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Xác nhận mật khẩu */}
-          <div>
-            <label className="block mb-1 text-gray-700 font-medium" htmlFor="confirmPassword">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Nút submit đăng ký */}
-          <button
-            type="submit"
-            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 font-semibold disabled:bg-blue-400"
-            disabled={loading}
-          >
-            {loading ? "Registering..." : "Register"}
-          </button>
-        </form>
-
-        {/* Link chuyển về trang đăng nhập nếu đã có tài khoản */}
-        <p className="mt-6 text-center text-gray-600">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline font-semibold">
-            Login
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+                <p className="mt-6 text-center text-gray-500 text-sm">
+                    Already have an account?{" "}
+                    <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold hover:underline">
+                        Sign In
+                    </Link>
+                </p>
+            </div>
+        </div>
+    );
 }

@@ -59,6 +59,8 @@ public class AuthenticationService {
                 .name(user.getName())
                 .role(user.getRoles().stream().findFirst().get().getName())
                 .avatarUrl(user.getAvatarUrl())
+                .email(user.getEmail())
+                .joinedDate(user.getJoinedDate().toString())
                 .build();
     }
 
@@ -82,6 +84,8 @@ public class AuthenticationService {
                 .name(user.getName())
                 .role(user.getRoles().stream().findFirst().get().getName())
                 .avatarUrl(user.getAvatarUrl())
+                .email(user.getEmail())
+                .joinedDate(user.getJoinedDate().toString())
                 .build();
     }
 }
