@@ -1,55 +1,55 @@
 import { useState, useEffect } from "react";
-import type {Book} from "../data/books";
-import authorsData from "../data/authors";
-import categoriesData from "../data/categories";
-import publishersData from "../data/publishers";
+import type {Book} from "../types/book";
 
 interface BookFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: Omit<Book, 'id'>) => void;
+    onSubmit: (data: any) => void;
     initialData?: Book | null;
 }
 
 export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }: BookFormModalProps) {
-    // Form States
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [coverUrl, setCoverUrl] = useState("");
-    const [authorIds, setAuthorIds] = useState<string[]>([]);
-    const [categoryIds, setCategoryIds] = useState<string[]>([]);
-    const [publisherId, setPublisherId] = useState("");
+    const [authorsStr, setAuthorsStr] = useState("");
+    const [categoriesStr, setCategoriesStr] = useState("");
+    const [publisherName, setPublisherName] = useState("");
+    const [available, setAvailable] = useState(true);
 
-    // Load data khi mở modal (nếu là sửa)
     useEffect(() => {
         if (initialData) {
             setTitle(initialData.title);
             setDescription(initialData.description);
             setCoverUrl(initialData.coverUrl);
-            setAuthorIds(initialData.authorIds.map(String));
-            setCategoryIds(initialData.categoryIds.map(String));
-            setPublisherId(initialData.publisherId?.toString() || "");
+            setAuthorsStr(initialData.authors.join(", "));
+            setCategoriesStr(initialData.categories.join(", "));
+            setPublisherName(initialData.publisherName);
+            setAvailable(initialData.available);
         } else {
             // Reset khi thêm mới
             setTitle("");
             setDescription("");
             setCoverUrl("https://placehold.co/400x600?text=No+Cover");
-            setAuthorIds([]);
-            setCategoryIds([]);
-            setPublisherId("");
+            setAuthorsStr("");
+            setCategoriesStr("");
+            setPublisherName("");
+            setAvailable(true);
         }
     }, [initialData, isOpen]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const bookData: Omit<Book, 'id'> = {
+        const bookData = {
             title,
             description,
             coverUrl,
-            authorIds: authorIds.map(Number),
-            categoryIds: categoryIds.map(Number),
-            publisherId: publisherId ? parseInt(publisherId) : null,
+            // Tách chuỗi thành mảng
+            authors: authorsStr.split(",").map(s => s.trim()).filter(s => s),
+            categories: categoriesStr.split(",").map(s => s.trim()).filter(s => s),
+            publisherName,
+            available,
             rating: initialData?.rating || 0
         };
 
@@ -84,32 +84,40 @@ export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }
                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" placeholder="https://..."/>
                     </div>
 
-                    {/* Authors & Categories (Multi-select simulation) */}
+                    {/* Authors & Categories */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Author (Select multiple)</label>
-                            <select multiple value={authorIds} onChange={e => setAuthorIds(Array.from(e.target.selectedOptions, option => option.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none h-32">
-                                {authorsData.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                            </select>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Authors (comma separated)</label>
+                            <input type="text" value={authorsStr} onChange={e => setAuthorsStr(e.target.value)}
+                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                   placeholder="J.K. Rowling, Nam Cao..."/>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category (Select multiple)</label>
-                            <select multiple value={categoryIds} onChange={e => setCategoryIds(Array.from(e.target.selectedOptions, option => option.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none h-32">
-                                {categoriesData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Categories (comma separated)</label>
+                            <input type="text" value={categoriesStr} onChange={e => setCategoriesStr(e.target.value)}
+                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                   placeholder="Fantasy, IT, Horror..."/>
                         </div>
                     </div>
 
                     {/* Publisher */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Publisher</label>
-                        <select value={publisherId} onChange={e => setPublisherId(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-                            <option value="">Select Publisher</option>
-                            {publishersData.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Publisher Name</label>
+                        <input type="text" value={publisherName} onChange={e => setPublisherName(e.target.value)}
+                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                               placeholder="NXB Kim Dong"/>
+                    </div>
+
+                    {/* Status Checkbox */}
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="availableCheck"
+                            checked={available}
+                            onChange={e => setAvailable(e.target.checked)}
+                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                        />
+                        <label htmlFor="availableCheck" className="text-sm font-medium text-gray-700">Is Available?</label>
                     </div>
 
                     {/* Description */}

@@ -25,17 +25,15 @@ public class BookService {
     private final BookRepository bookRepository;
     private final BookCopyRepository bookCopyRepository;
 
-    public PageResponse<BookResponse> getAllBooks(int page, int size, String keyword) {
-        // Tạo đối tượng Pageable (Page trong JPA bắt đầu từ 0, còn Fe gửi từ 1)
+    public PageResponse<BookResponse> getAllBooks(int page, int size, String keyword, Long authorId, Long categoryId) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-        // Gọi Repository
-        Page<Book> bookPage = bookRepository.findByTitleOrAuthorContaining(keyword, pageable);
-        // Map Entity sang DTO
+
+        Page<Book> bookPage = bookRepository.searchBooks(keyword, authorId, categoryId, pageable);
+
         List<BookResponse> bookResponses = bookPage.getContent().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
-        // Đóng gói vào PageResponse
         return PageResponse.<BookResponse>builder()
                 .currentPage(page)
                 .pageSize(size)

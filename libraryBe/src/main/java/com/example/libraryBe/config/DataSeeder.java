@@ -74,50 +74,108 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedBooks() {
-        if (bookRepository.count() == 0) {
-            System.out.println("Đang khởi tạo dữ liệu Sách mẫu...");
+        if (bookRepository.count() < 5) {
+            Author aRobert = createAuthorIfNotFound("Robert C. Martin");
+            Author aRowling = createAuthorIfNotFound("J.K. Rowling");
+            Author aTolkien = createAuthorIfNotFound("J.R.R. Tolkien");
+            Author aMurakami = createAuthorIfNotFound("Haruki Murakami");
+            Author aNamCao = createAuthorIfNotFound("Nam Cao");
+            Author aDanBrown = createAuthorIfNotFound("Dan Brown");
 
-            Author author1 = new Author(null, "Robert C. Martin");
-            Author author2 = new Author(null, "J.K. Rowling");
-            authorRepository.saveAll(Set.of(author1, author2));
+            Category cIT = createCategoryIfNotFound("Công nghệ thông tin");
+            Category cFantasy = createCategoryIfNotFound("Giả tưởng");
+            Category cLiterature = createCategoryIfNotFound("Văn học");
+            Category cDetective = createCategoryIfNotFound("Trinh thám");
+            Category cHorror = createCategoryIfNotFound("Kinh dị");
 
-            Category catIT = new Category(null, "Công nghệ thông tin");
-            Category catFantasy = new Category(null, "Giả tưởng");
-            categoryRepository.saveAll(Set.of(catIT, catFantasy));
+            Publisher pOReilly = createPublisherIfNotFound("O'Reilly Media");
+            Publisher pKimDong = createPublisherIfNotFound("NXB Kim Đồng");
+            Publisher pHoiNhaVan = createPublisherIfNotFound("Hội Nhà Văn");
+            Publisher pNhaNam = createPublisherIfNotFound("Nhã Nam");
 
-            Publisher pub1 = new Publisher(null, "NXB Trẻ");
-            Publisher pub2 = new Publisher(null, "O'Reilly Media");
-            publisherRepository.saveAll(Set.of(pub1, pub2));
+            createBookWithCopy("The Clean Coder", "Quy tắc ứng xử cho lập trình viên chuyên nghiệp.", 4.8,
+                    "https://m.media-amazon.com/images/I/51uO-K+W53L._SY445_SX342_.jpg", pOReilly, aRobert, cIT, 5);
 
-            Book book1 = Book.builder()
-                    .title("Clean Code")
-                    .description("Cuốn sách gối đầu giường cho mọi lập trình viên.")
-                    .rating(5.0)
-                    .coverUrl("https://m.media-amazon.com/images/I/41xShlnTZTL._SX376_BO1,204,203,200_.jpg")
-                    .publisher(pub2)
-                    .authors(new HashSet<>(Set.of(author1)))
-                    .categories(new HashSet<>(Set.of(catIT)))
-                    .build();
+            createBookWithCopy("Clean Architecture", "Kiến trúc phần mềm sạch và bền vững.", 4.9,
+                    "https://m.media-amazon.com/images/I/41-sN-mzwKL._SY445_SX342_.jpg", pOReilly, aRobert, cIT, 3);
 
-            Book book2 = Book.builder()
-                    .title("Harry Potter và Hòn đá Phù thủy")
-                    .description("Cậu bé phù thủy với vết sẹo hình tia chớp.")
-                    .rating(4.8)
-                    .coverUrl("https://upload.wikimedia.org/wikipedia/en/6/6b/Harry_Potter_and_the_Philosopher%27s_Stone_Book_Cover.jpg")
-                    .publisher(pub1)
-                    .authors(new HashSet<>(Set.of(author2)))
-                    .categories(new HashSet<>(Set.of(catFantasy)))
-                    .build();
+            createBookWithCopy("Harry Potter 1", "Harry Potter và Hòn đá Phù thủy.", 4.9,
+                    "https://upload.wikimedia.org/wikipedia/en/6/6b/Harry_Potter_and_the_Philosopher%27s_Stone_Book_Cover.jpg", pKimDong, aRowling, cFantasy, 10);
 
-            bookRepository.saveAll(Set.of(book1, book2));
+            createBookWithCopy("Harry Potter 2", "Harry Potter và Phòng chứa Bí mật.", 4.8,
+                    "https://upload.wikimedia.org/wikipedia/en/5/5c/Harry_Potter_and_the_Chamber_of_Secrets.jpg", pKimDong, aRowling, cFantasy, 8);
 
-            BookCopy copy1 = BookCopy.builder().book(book1).status(BookCopyStatus.AVAILABLE).condition("New").build();
-            BookCopy copy2 = BookCopy.builder().book(book1).status(BookCopyStatus.AVAILABLE).condition("Good").build();
-            BookCopy copy3 = BookCopy.builder().book(book2).status(BookCopyStatus.AVAILABLE).condition("Worn").build();
+            createBookWithCopy("Harry Potter 3", "Harry Potter và Tên tù nhân ngục Azkaban.", 4.9,
+                    "https://upload.wikimedia.org/wikipedia/en/a/a0/Harry_Potter_and_the_Prisoner_of_Azkaban.jpg", pKimDong, aRowling, cFantasy, 6);
 
-            bookCopyRepository.saveAll(Set.of(copy1, copy2, copy3));
+            createBookWithCopy("The Hobbit", "Hành trình của Bilbo Baggins.", 4.7,
+                    "https://upload.wikimedia.org/wikipedia/en/4/4a/TheHobbit_FirstEdition.jpg", pNhaNam, aTolkien, cFantasy, 4);
 
-            System.out.println("Send book complete!");
+            createBookWithCopy("Lord of the Rings 1", "Đoàn hộ nhẫn.", 5.0,
+                    "https://upload.wikimedia.org/wikipedia/en/8/8e/The_Fellowship_of_the_Ring_cover.gif", pNhaNam, aTolkien, cFantasy, 5);
+
+            createBookWithCopy("Rừng Na Uy", "Câu chuyện tình yêu và nỗi cô đơn của giới trẻ.", 4.5,
+                    "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1386923485i/11297.jpg", pHoiNhaVan, aMurakami, cLiterature, 7);
+
+            createBookWithCopy("Kafka bên bờ biển", "Một tiểu thuyết siêu thực đầy ám ảnh.", 4.6,
+                    "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1327872775i/4929.jpg", pNhaNam, aMurakami, cLiterature, 4);
+
+            createBookWithCopy("Chí Phèo", "Tuyển tập truyện ngắn Nam Cao.", 4.9,
+                    "https://upload.wikimedia.org/wikipedia/vi/a/ae/Bia-sach-chi-pheo.jpg", pHoiNhaVan, aNamCao, cLiterature, 15);
+
+            createBookWithCopy("Mật mã Da Vinci", "Robert Langdon và bí mật Chén Thánh.", 4.4,
+                    "https://upload.wikimedia.org/wikipedia/en/6/6b/DaVinciCode.jpg", pNhaNam, aDanBrown, cDetective, 6);
+
+            createBookWithCopy("Thiên thần và Ác quỷ", "Cuộc chiến giữa Khoa học và Tôn giáo.", 4.3,
+                    "https://upload.wikimedia.org/wikipedia/en/e/e9/AngelsAndDemons.jpg", pNhaNam, aDanBrown, cDetective, 5);
+
+            createBookWithCopy("Hỏa Ngục", "Dante và virus sinh học.", 4.1,
+                    "https://upload.wikimedia.org/wikipedia/en/e/e3/Inferno_Dan_Brown.jpg", pNhaNam, aDanBrown, cDetective, 8);
+
+            System.out.println("Complete data!");
         }
+    }
+    private Author createAuthorIfNotFound(String name) {
+        return authorRepository.findByName(name)
+                .orElseGet(() -> authorRepository.save(new Author(null, name)));
+    }
+
+    private Category createCategoryIfNotFound(String name) {
+        return categoryRepository.findByName(name)
+                .orElseGet(() -> categoryRepository.save(new Category(null, name)));
+    }
+
+    private Publisher createPublisherIfNotFound(String name) {
+        return publisherRepository.findByName(name)
+                .orElseGet(() -> publisherRepository.save(new Publisher(null, name)));
+    }
+
+    private void createBookWithCopy(String title, String desc, Double rating, String coverUrl,
+                                    Publisher publisher, Author author, Category category, int copyCount) {
+        if (bookRepository.findAll().stream().anyMatch(b -> b.getTitle().equals(title))) {
+            return;
+        }
+
+        Book book = Book.builder()
+                .title(title)
+                .description(desc)
+                .rating(rating)
+                .coverUrl(coverUrl)
+                .publisher(publisher)
+                .authors(new HashSet<>(Set.of(author)))
+                .categories(new HashSet<>(Set.of(category)))
+                .build();
+
+        Book savedBook = bookRepository.save(book);
+        // Tạo các bản copy
+        Set<BookCopy> copies = new HashSet<>();
+        for (int i = 0; i < copyCount; i++) {
+            copies.add(BookCopy.builder()
+                    .book(savedBook)
+                    .status(BookCopyStatus.AVAILABLE)
+                    .condition("New")
+                    .build());
+        }
+        bookCopyRepository.saveAll(copies);
     }
 }

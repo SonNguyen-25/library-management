@@ -1,7 +1,4 @@
-import type {Book} from "../data/books";
-import authorsData from "../data/authors";
-import categoriesData from "../data/categories";
-import publishersData from "../data/publishers";
+import type {Book} from "../types/book";
 
 interface AdminBookProps {
     book: Book;
@@ -10,10 +7,6 @@ interface AdminBookProps {
 }
 
 export default function AdminBook({ book, onEdit, onDelete }: AdminBookProps) {
-    const getAuthorNames = () => book.authorIds.map(id => authorsData.find(a => a.id === id)?.name).join(", ");
-    const getCategoryNames = () => book.categoryIds.map(id => categoriesData.find(c => c.id === id)?.name).join(", ");
-    const getPublisherName = () => publishersData.find(p => p.id === book.publisherId)?.name || "Unknown";
-
     return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-full hover:shadow-md transition-shadow">
             <div className="flex gap-4 mb-4">
@@ -27,9 +20,17 @@ export default function AdminBook({ book, onEdit, onDelete }: AdminBookProps) {
                         {book.title}
                     </h3>
                     <div className="text-xs text-gray-500 space-y-1">
-                        <p className="truncate"><span className="font-semibold text-purple-700">Author:</span> {getAuthorNames()}</p>
-                        <p className="truncate"><span className="font-semibold text-purple-700">Category:</span> {getCategoryNames()}</p>
-                        <p className="truncate"><span className="font-semibold text-purple-700">Publisher:</span> {getPublisherName()}</p>
+                        <p className="truncate"><span className="font-semibold text-purple-700">Author:</span> {book.authors.join(", ")}</p>
+                        <p className="truncate"><span className="font-semibold text-purple-700">Category:</span> {book.categories.join(", ")}</p>
+                        <p className="truncate"><span className="font-semibold text-purple-700">Publisher:</span> {book.publisherName}</p>
+
+                        {/* Hiển thị trạng thái */}
+                        <p className="">
+                            <span className="font-semibold text-purple-700">Status: </span>
+                            <span className={book.available ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                                {book.available ? "Available" : "Out of Stock"}
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>

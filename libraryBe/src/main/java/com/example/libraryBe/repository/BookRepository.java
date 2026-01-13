@@ -9,9 +9,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
-    // Tìm kiếm sách theo Title hoặc Tên Tác Giả, có phân trang
-    @Query("SELECT b FROM Book b JOIN b.authors a WHERE " +
-            "(:keyword IS NULL OR :keyword = '' OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Book> findByTitleOrAuthorContaining(String keyword, Pageable pageable);
+
+    // Tìm theo Keyword + Category + Author
+    @Query("SELECT DISTINCT b FROM Book b " +
+            "LEFT JOIN b.authors a " +
+            "LEFT JOIN b.categories c " +
+            "WHERE (:keyword IS NULL OR :keyword = '' OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(a.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:authorId IS NULL OR a.id = :authorId) " +
+            "AND (:categoryId IS NULL OR c.id = :categoryId)")
+    Page<Book> searchBooks(String keyword, Long authorId, Long categoryId, Pageable pageable);
 }

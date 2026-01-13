@@ -41,10 +41,9 @@ public class AuthenticationService {
                 .username(request.getUsername())
                 .name(request.getName())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword())) // Mã hóa pass
+                .password(passwordEncoder.encode(request.getPassword()))
                 .roles(new HashSet<>(Set.of(userRole)))
                 .status("Active")
-                // Tạo avatar ngẫu nhiên theo tên
                 .avatarUrl("https://ui-avatars.com/api/?name=" + request.getName().replace(" ", "+"))
                 .joinedDate(LocalDateTime.now())
                 .build();
