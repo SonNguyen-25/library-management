@@ -3,15 +3,15 @@ import { useAuth } from "../hooks/useAuth";
 import type {Book} from "../types/book";
 import type {Review} from "../data/reviews";
 import { reviewService } from "../services/reviewService";
+import { requestService } from "../services/bookRequestService";
 
 interface BookDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     book: Book | null;
-    onBorrow: (book: Book) => void;
 }
 
-export default function BookDetailModal({ isOpen, onClose, book, onBorrow }: BookDetailModalProps) {
+export default function BookDetailModal({ isOpen, onClose, book }: BookDetailModalProps) {
     const { user, isAuthenticated } = useAuth();
 
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -21,8 +21,6 @@ export default function BookDetailModal({ isOpen, onClose, book, onBorrow }: Boo
     useEffect(() => {
         if (book) {
             setReviews(reviewService.getReviewsByBookId(book.id));
-
-            // Reset form
             setUserRating(0);
             setUserComment("");
         }
@@ -54,15 +52,25 @@ export default function BookDetailModal({ isOpen, onClose, book, onBorrow }: Boo
         setUserComment("");
     };
 
-    const handleBorrowClick = () => {
+    const handleBorrowClick = async () => {
         if (!isAuthenticated) {
             alert("Bạn cần đăng nhập để mượn sách!");
             return;
         }
-        if (book) {
-            onBorrow(book);
+
+        if (!book) return;
+
+        if (confirm(`Bạn có muốn gửi yêu cầu mượn sách "${book.title}" không?`)) {
+            try {
+                await requestService.createBorrowRequest(book.id);
+                alert("✅ Gửi yêu cầu thành công! Vui lòng chờ thủ thư phê duyệt.");
+                onClose();
+            } catch (error: any) {
+                alert("Lỗi: " + (error.response?.data?.message || error.response?.data || "Không thể gửi yêu cầu"));
+            }
         }
-    }
+    };
+
     const handleSubscribe = () => {
         if (!isAuthenticated) {
             alert("Bạn cần đăng nhập để đăng ký nhận thông báo!");
@@ -115,7 +123,8 @@ export default function BookDetailModal({ isOpen, onClose, book, onBorrow }: Boo
                     <div className="flex justify-between items-start">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900 mb-1">{book.title}</h2>
-                            {/* rating */}
+
+                            {/* RATING */}
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="flex text-yellow-400 text-lg">
                                     {[1, 2, 3, 4, 5].map((star) => (
@@ -128,6 +137,7 @@ export default function BookDetailModal({ isOpen, onClose, book, onBorrow }: Boo
                                     ({book.rating.toFixed(1)})
                                 </span>
                             </div>
+
                             <div className="flex flex-wrap items-center gap-2 mb-4">
                                 <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
                                     {book.publisherName}
@@ -152,64 +162,36 @@ export default function BookDetailModal({ isOpen, onClose, book, onBorrow }: Boo
 
                     <hr className="my-6 border-gray-100" />
 
-                    {/* REVIEWS */}
+                    {/* REVIEWS SECTION */}
                     <div>
                         <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                             Reviews <span className="text-gray-400 text-sm font-normal">({reviews.length})</span>
                         </h3>
-
                         {isAuthenticated ? (
                             <div className="bg-gray-50 p-4 rounded-xl mb-6">
                                 <h4 className="font-semibold text-sm text-gray-700 mb-2">Write a review as {user?.name}</h4>
                                 <div className="flex gap-1 mb-3">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            type="button"
-                                            onClick={() => setUserRating(star)}
-                                            className={`text-2xl transition-colors ${star <= userRating ? "text-yellow-400" : "text-gray-300"}`}
-                                        >
-                                            ★
-                                        </button>
+                                        <button key={star} type="button" onClick={() => setUserRating(star)} className={`text-2xl transition-colors ${star <= userRating ? "text-yellow-400" : "text-gray-300"}`}>★</button>
                                     ))}
                                 </div>
-                                <textarea
-                                    value={userComment}
-                                    onChange={(e) => setUserComment(e.target.value)}
-                                    placeholder="Share your thoughts..."
-                                    className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none text-sm mb-2"
-                                    rows={2}
-                                />
-                                <button
-                                    onClick={handleSubmitReview}
-                                    className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-black transition-colors"
-                                >
-                                    Post Review
-                                </button>
+                                <textarea value={userComment} onChange={(e) => setUserComment(e.target.value)} placeholder="Share your thoughts..." className="w-full p-3 rounded-lg border border-gray-200 outline-none text-sm mb-2" rows={2}/>
+                                <button onClick={handleSubmitReview} className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-black transition-colors">Post Review</button>
                             </div>
                         ) : (
-                            <div className="bg-gray-50 p-4 rounded-xl mb-6 text-center text-sm text-gray-500">
-                                Please <span className="font-bold text-blue-600">Login</span> to write a review.
-                            </div>
+                            <div className="bg-gray-50 p-4 rounded-xl mb-6 text-center text-sm text-gray-500">Please <span className="font-bold text-blue-600">Login</span> to write a review.</div>
                         )}
-
                         <div className="space-y-4">
-                            {reviews.length === 0 ? (
-                                <p className="text-gray-500 italic text-center py-4">No reviews yet. Be the first!</p>
-                            ) : (
-                                reviews.map((review) => (
-                                    <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <span className="font-semibold text-gray-900">{review.userName}</span>
-                                            <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className="flex text-yellow-400 text-sm mb-1">
-                                            {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
-                                        </div>
-                                        <p className="text-gray-600 text-sm">{review.comment}</p>
+                            {reviews.map((review) => (
+                                <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="font-semibold text-gray-900">{review.userName}</span>
+                                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                ))
-                            )}
+                                    <div className="flex text-yellow-400 text-sm mb-1">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
+                                    <p className="text-gray-600 text-sm">{review.comment}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

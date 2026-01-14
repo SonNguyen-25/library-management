@@ -57,8 +57,8 @@ export default function UserDashboard() {
     };
 
     const handleBorrowBook = (book: Book) => {
-        // Sau này sẽ gọi API request borrow
-        alert(`Bạn đã chọn mượn sách: ${book.title}`);
+        setSelectedBook(book);
+        setIsDetailOpen(true);
     };
 
     const soonDueBooks = loans
@@ -208,7 +208,6 @@ export default function UserDashboard() {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 book={selectedBook}
-                onBorrow={handleBorrowBook}
             />
         </>
     );

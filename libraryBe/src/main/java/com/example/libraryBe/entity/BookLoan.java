@@ -1,10 +1,12 @@
 package com.example.libraryBe.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.example.libraryBe.model.LoanStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import com.example.libraryBe.entity.User;
+
 @Entity
 @Table(name = "book_loans")
 @Data
@@ -19,11 +21,13 @@ public class BookLoan {
     // Mượn cuốn cụ thể nào (Copy)
     @ManyToOne
     @JoinColumn(name = "book_copy_id", nullable = false)
+    @JsonIgnoreProperties({"loans", "hibernateLazyInitializer", "handler"})
     private BookCopy bookCopy;
 
     // Ai mượn
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"loans", "requests", "password", "roles"})
     private User user;
 
     private LocalDateTime loanDate;

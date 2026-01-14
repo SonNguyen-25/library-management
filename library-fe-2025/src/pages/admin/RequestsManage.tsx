@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
-import bookRequestService from "../../services/bookRequestService";
-import {
-    type BookRequest,
-    BookRequestStatusEnum,
-    BookRequestTypeEnum
-} from "../../data/bookRequests";
-import { BookLoanService } from "../../services/bookLoanService";
-import bookCopies from "../../data/bookCopies";
-import booksData from "../../data/books";
+import { requestService, type BookRequest } from "../../services/bookRequestService";
 
 export default function RequestsManage() {
     const [requests, setRequests] = useState<BookRequest[]>([]);
@@ -17,13 +9,14 @@ export default function RequestsManage() {
 
     const fetchRequests = async () => {
         setLoading(true);
-        const data = await bookRequestService.getAll();
-        setRequests(data.sort((a, b) => {
-            if (a.status === BookRequestStatusEnum.PENDING && b.status !== BookRequestStatusEnum.PENDING) return -1;
-            if (a.status !== BookRequestStatusEnum.PENDING && b.status === BookRequestStatusEnum.PENDING) return 1;
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        }));
-        setLoading(false);
+        try {
+            const data = await requestService.getAllRequestsAdmin();
+            setRequests(data);
+        } catch (error) {
+            console.error("Failed to load requests", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -31,65 +24,39 @@ export default function RequestsManage() {
     }, []);
 
     const handleApprove = async (request: BookRequest) => {
-        if (!window.confirm(`Accept ${request.type} request for "${request.bookName}"?`)) return;
+        if (!window.confirm(`Accept request for "${request.book.title}"?`)) return;
 
         try {
-            if (request.type === BookRequestTypeEnum.BORROWING) {
-                // Tìm sách từ tên
-                const book = booksData.find(b => b.title === request.bookName);
-                if (!book) { alert("Book not found!"); return; }
-
-                // Tìm bản sao AVAILABLE
-                const availableCopy = bookCopies.find(c => c.bookId === book.id && c.status === "AVAILABLE");
-                if (!availableCopy) { alert("No copies available!"); return; }
-
-                // Tạo phiếu mượn
-                await BookLoanService.create({
-                    userUserName: request.username,
-                    bookCopyId: availableCopy.id,
-                    bookCopyOriginalBookTitle: request.bookName
-                });
-
-                availableCopy.status = "BORROWED";
-
-            } else if (request.type === BookRequestTypeEnum.RETURNING) {
-                await BookLoanService.returnBook(request.bookLoanId);
-            }
-
-            await bookRequestService.updateStatus(request.id, BookRequestStatusEnum.ACCEPTED);
-
-            alert(`Request Accepted!`);
+            await requestService.processRequestAdmin(request.id, 'ACCEPTED');
+            alert("Request Accepted & Loan Created!");
             fetchRequests();
-
         } catch (error: any) {
-            alert("Error: " + error.message);
+            const serverMessage = error.response?.data;
+            const displayMsg = typeof serverMessage === 'string' ? serverMessage : (serverMessage?.message || error.message);
+
+            alert("Không thể duyệt: " + displayMsg);
         }
     };
-    const handleReject = async (id: string) => {
+
+    const handleReject = async (id: number) => {
         if (!window.confirm("Deny this request?")) return;
         try {
-            await bookRequestService.updateStatus(id, BookRequestStatusEnum.DENIED);
+            await requestService.processRequestAdmin(id, 'DENIED');
             fetchRequests();
         } catch (error: any) {
-            alert(error.message);
+            alert("Error: " + error.message);
         }
     };
 
     const filteredRequests = requests.filter(r => filterStatus === "ALL" || r.status === filterStatus);
 
-    const getStatusBadge = (status: BookRequestStatusEnum) => {
-        const colors = {
-            [BookRequestStatusEnum.PENDING]: "bg-yellow-100 text-yellow-800",
-            [BookRequestStatusEnum.ACCEPTED]: "bg-green-100 text-green-800",
-            [BookRequestStatusEnum.DENIED]: "bg-red-100 text-red-800"
+    const getStatusBadge = (status: string) => {
+        const colors: any = {
+            "PENDING": "bg-yellow-100 text-yellow-800",
+            "ACCEPTED": "bg-green-100 text-green-800",
+            "DENIED": "bg-red-100 text-red-800"
         };
-        return <span className={`px-2 py-1 rounded-full text-xs font-bold ${colors[status]}`}>{status}</span>;
-    };
-
-    const getTypeBadge = (type: BookRequestTypeEnum) => {
-        return type === BookRequestTypeEnum.BORROWING
-            ? <span className="text-blue-600 font-bold text-xs uppercase border border-blue-200 px-2 py-0.5 rounded bg-blue-50">Borrowing</span>
-            : <span className="text-purple-600 font-bold text-xs uppercase border border-purple-200 px-2 py-0.5 rounded bg-purple-50">Returning</span>;
+        return <span className={`px-2 py-1 rounded-full text-xs font-bold ${colors[status] || 'bg-gray-100'}`}>{status}</span>;
     };
 
     return (
@@ -117,9 +84,10 @@ export default function RequestsManage() {
                         <table className="w-full text-left">
                             <thead className="bg-purple-100 text-purple-800 uppercase text-xs font-bold">
                             <tr>
+                                <th className="px-6 py-4">ID</th>
                                 <th className="px-6 py-4">Type</th>
                                 <th className="px-6 py-4">Book Name</th>
-                                <th className="px-6 py-4">Username</th>
+                                <th className="px-6 py-4">User</th>
                                 <th className="px-6 py-4">Date</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
@@ -127,21 +95,31 @@ export default function RequestsManage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                             {loading ? (
-                                <tr><td colSpan={6} className="text-center py-8">Loading...</td></tr>
+                                <tr><td colSpan={7} className="text-center py-8">Loading...</td></tr>
                             ) : filteredRequests.length === 0 ? (
-                                <tr><td colSpan={6} className="text-center py-8 text-gray-500">No requests found.</td></tr>
+                                <tr><td colSpan={7} className="text-center py-8 text-gray-500">No requests found.</td></tr>
                             ) : (
                                 filteredRequests.map(req => (
                                     <tr key={req.id} className="hover:bg-purple-50">
-                                        <td className="px-6 py-4">{getTypeBadge(req.type)}</td>
-                                        <td className="px-6 py-4 font-medium text-gray-800">{req.bookName}</td>
-                                        <td className="px-6 py-4 font-bold text-gray-700">{req.username}</td>
+                                        <td className="px-6 py-4 text-gray-500">#{req.id}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`text-xs font-bold px-2 py-1 rounded ${req.type === 'BORROWING' ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-purple-50 text-purple-600 border border-purple-200'}`}>
+                                                {req.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-800">
+                                            <div className="flex items-center gap-3">
+                                                <img src={req.book.coverUrl} alt="" className="w-8 h-10 object-cover rounded shadow-sm"/>
+                                                {req.book.title}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-gray-700">{req.user?.username}</td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {new Date(req.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4">{getStatusBadge(req.status)}</td>
                                         <td className="px-6 py-4 text-right">
-                                            {req.status === BookRequestStatusEnum.PENDING && (
+                                            {req.status === 'PENDING' && (
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleApprove(req)}

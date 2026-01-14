@@ -1,51 +1,48 @@
-import bookRequestsData, {
-    type BookRequest,
-    BookRequestStatusEnum
-} from '../data/bookRequests';
+import axiosClient from '../api/axiosClient';
 
-const REQUEST_STORAGE_KEY = 'library_book_requests';
+export interface BookRequest {
+    id: number;
+    book: {
+        id: number;
+        title: string;
+        coverUrl: string;
+    };
 
-// Helper lấy data từ localStorage
-const getStoredRequests = (): BookRequest[] => {
-    const stored = localStorage.getItem(REQUEST_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-    localStorage.setItem(REQUEST_STORAGE_KEY, JSON.stringify(bookRequestsData));
-    return bookRequestsData;
-};
+    user: {
+        id: number;
+        username: string;
+        name: string;
+    };
+    type: 'BORROWING' | 'RETURNING';
+    status: 'PENDING' | 'ACCEPTED' | 'DENIED';
+    createdAt: string;
+}
 
-const bookRequestService = {
-    getAll: async (): Promise<BookRequest[]> => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return getStoredRequests();
+export const requestService = {
+    createBorrowRequest: async (bookId: number) => {
+        // Backend nhận { bookId: ... }
+        return await axiosClient.post('/requests/borrow', { bookId });
+    },
+    getMyRequests: async () => {
+        const response = await axiosClient.get<BookRequest[]>('/requests/my-requests');
+        return response.data;
     },
 
-    updateStatus: async (id: string, status: BookRequestStatusEnum): Promise<BookRequest> => {
-        const requests = getStoredRequests();
-        const index = requests.findIndex(r => r.id === id);
-        if (index === -1) throw new Error("Request not found");
-
-        const updatedRequest = { ...requests[index], status, updatedAt: new Date().toISOString() };
-        requests[index] = updatedRequest;
-
-        localStorage.setItem(REQUEST_STORAGE_KEY, JSON.stringify(requests));
-        return updatedRequest;
+    getAllRequestsAdmin: async () => {
+        const response = await axiosClient.get<BookRequest[]>('/requests/admin/all');
+        return response.data;
     },
 
-    create: async (
-        requestData: Omit<BookRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>
-    ): Promise<BookRequest> => {
-        const requests = getStoredRequests();
-        const newRequest: BookRequest = {
-            ...requestData,
-            id: `req-${Date.now()}`,
-            status: BookRequestStatusEnum.PENDING,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-        const updatedRequests = [newRequest, ...requests];
-        localStorage.setItem(REQUEST_STORAGE_KEY, JSON.stringify(updatedRequests));
-        return newRequest;
+    processRequestAdmin: async (id: number, status: 'ACCEPTED' | 'DENIED') => {
+        // API PUT với query param status
+        return await axiosClient.put(`/requests/admin/${id}`, null, {
+            params: { status }
+        });
+    },
+
+    cancelRequest: async (id: number) => {
+        return await axiosClient.delete(`/requests/${id}`);
     }
 };
 
-export default bookRequestService;
+export default requestService;

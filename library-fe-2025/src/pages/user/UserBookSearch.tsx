@@ -83,7 +83,8 @@ export default function UserBookSearch() {
     };
 
     const handleBorrowBook = (book: Book) => {
-        alert(`Bạn đã chọn mượn sách: ${book.title}. Tính năng đang phát triển!`);
+        setSelectedBook(book);
+        setIsDetailOpen(true);
     };
 
     return (
@@ -202,7 +203,6 @@ export default function UserBookSearch() {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 book={selectedBook}
-                onBorrow={handleBorrowBook}
             />
         </>
     );

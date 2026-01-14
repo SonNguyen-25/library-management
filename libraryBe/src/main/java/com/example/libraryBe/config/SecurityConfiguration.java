@@ -29,11 +29,25 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Cấu hình CORS
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/public/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/api/v1/public/**"
+                        ).permitAll()
+                        // API ADMIN
+                        .requestMatchers(
+                                "/api/v1/admin/**",
+                                "/api/v1/loans/admin/**",
+                                "/api/v1/requests/admin/**"
+                        ).hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_LIBRARY_MANAGER",
+                                "ROLE_USER_MANAGER",
+                                "ROLE_CIRCULATION_MANAGER")
+                        .requestMatchers(
+                                "/api/v1/loans/**",
+                                "/api/v1/requests/**"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
