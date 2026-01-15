@@ -1,37 +1,21 @@
-import publishersData, {type Publisher } from '../data/publishers';
-
-const STORAGE_KEY = 'library_publishers';
-
-const getStored = (): Publisher[] => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(publishersData));
-    return publishersData;
-};
+import axiosClient from '../api/axiosClient';
+import type {Publisher} from '../types/publisher';
 
 export const PublisherService = {
-    getAll: async () => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return getStored();
+    getAll: async (): Promise<Publisher[]> => {
+        const response = await axiosClient.get<Publisher[]>('/admin/publishers');
+        return response.data;
     },
+
     create: async (name: string) => {
-        const items = getStored();
-        const newItem = { id: Date.now(), name };
-        const updated = [newItem, ...items];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return newItem;
+        return await axiosClient.post('/admin/publishers', { name });
     },
+
     update: async (id: number, name: string) => {
-        const items = getStored();
-        const index = items.findIndex(i => i.id === id);
-        if (index !== -1) {
-            items[index] = { ...items[index], name };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        }
+        return await axiosClient.put(`/admin/publishers/${id}`, { name });
     },
+
     delete: async (id: number) => {
-        const items = getStored();
-        const filtered = items.filter(i => i.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+        return await axiosClient.delete(`/admin/publishers/${id}`);
     }
 };

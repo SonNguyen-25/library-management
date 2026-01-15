@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
 import { PublisherService } from "../../services/publisherService";
-import type {Publisher} from "../../data/publishers";
+import type {Publisher} from "../../types/publisher";
 import PublisherFormModal from "../../components/PublisherFormModal";
 
 export default function PublisherManage() {
@@ -28,8 +28,13 @@ export default function PublisherManage() {
 
     const handleDelete = async (id: number) => {
         if (window.confirm("Delete this publisher?")) {
-            await PublisherService.delete(id);
-            fetch();
+            try {
+                await PublisherService.delete(id);
+                fetch();
+            } catch (error: any) {
+                const msg = error.response?.data?.message || "Không thể xóa nhà xuất bản này.";
+                alert("Lỗi: " + msg);
+            }
         }
     };
 

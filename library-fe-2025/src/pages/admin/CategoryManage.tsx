@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
 import { CategoryService } from "../../services/categoryService";
-import type {Category} from "../../data/categories";
+import type {Category} from "../../types/category";
 import CategoryFormModal from "../../components/CategoryFormModal";
 
 export default function CategoryManage() {
@@ -30,8 +30,13 @@ export default function CategoryManage() {
 
     const handleDelete = async (id: number) => {
         if (window.confirm("Delete this category?")) {
-            await CategoryService.delete(id);
-            fetch();
+            try {
+                await CategoryService.delete(id);
+                fetch();
+            } catch (error: any) {
+                const msg = error.response?.data?.message || "Không thể xóa thể loại này.";
+                alert("Lỗi: " + msg);
+            }
         }
     };
 

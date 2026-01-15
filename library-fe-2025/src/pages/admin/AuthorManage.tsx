@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
 import { AuthorService } from "../../services/authorService";
-import type {Author} from "../../data/authors";
+import type {Author} from "../../types/author";
 import AuthorFormModal from "../../components/AuthorFormModal";
 
 export default function AuthorManage() {
@@ -28,8 +28,13 @@ export default function AuthorManage() {
 
     const handleDelete = async (id: number) => {
         if (window.confirm("Delete this author?")) {
-            await AuthorService.delete(id);
-            fetch();
+            try {
+                await AuthorService.delete(id);
+                fetch();
+            } catch (error: any) {
+                const msg = error.response?.data?.message || "Không thể xóa tác giả này.";
+                alert("Lỗi: " + msg);
+            }
         }
     };
 
