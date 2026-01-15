@@ -1,13 +1,11 @@
 package com.example.libraryBe.service;
 
-import com.example.libraryBe.entity.Book;
-import com.example.libraryBe.entity.BookCopy;
-import com.example.libraryBe.entity.BookLoan;
-import com.example.libraryBe.entity.User;
+import com.example.libraryBe.entity.*;
 import com.example.libraryBe.model.BookCopyStatus;
 import com.example.libraryBe.model.LoanStatus;
 import com.example.libraryBe.repository.BookCopyRepository;
 import com.example.libraryBe.repository.BookLoanRepository;
+import com.example.libraryBe.repository.FineRepository;
 import com.example.libraryBe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -15,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -24,6 +23,8 @@ public class LoanService {
     private final BookLoanRepository loanRepository;
     private final BookCopyRepository bookCopyRepository;
     private final UserRepository userRepository;
+    private final FineRepository fineRepository;
+
 
     @Transactional
     public BookLoan createLoanFromRequest(User user, Book book) {
@@ -52,12 +53,35 @@ public class LoanService {
         if (loan.getStatus() == LoanStatus.RETURNED) {
             throw new RuntimeException("Phiếu mượn này đã được trả trước đó rồi!");
         }
+
+        LocalDateTime returnDate = LocalDateTime.now();
+
         loan.setStatus(LoanStatus.RETURNED);
-        loan.setReturnDate(LocalDateTime.now());
+        loan.setReturnDate(returnDate);
         loanRepository.save(loan);
+
+        // Trả sách về kho
         BookCopy copy = loan.getBookCopy();
         copy.setStatus(BookCopyStatus.AVAILABLE);
         bookCopyRepository.save(copy);
+
+        // LOGIC TÍNH PHẠT TỰ ĐỘNG
+        long overdueDays = ChronoUnit.DAYS.between(loan.getDueDate().toLocalDate(), returnDate.toLocalDate());
+
+        if (overdueDays > 0) {
+            // Quy định: 5.000 VND / ngày quá hạn
+            double fineAmount = overdueDays * 5000.0;
+
+            Fine fine = Fine.builder()
+                    .user(loan.getUser())
+                    .bookLoan(loan)
+                    .amount(fineAmount)
+                    .description("Quá hạn " + overdueDays + " ngày (Hạn trả: "
+                            + loan.getDueDate().toLocalDate() + ")")
+                    .build();
+
+            fineRepository.save(fine);
+        }
     }
     public List<BookLoan> getMyLoans(String username, String statusStr) {
         User user = userRepository.findByUsername(username)

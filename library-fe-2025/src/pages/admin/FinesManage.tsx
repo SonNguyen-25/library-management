@@ -1,61 +1,61 @@
 import { useState, useEffect } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
 import { FineService } from "../../services/fineService";
-import type {Fine} from "../../data/fines";
+import type {Fine} from "../../types/fine";
 import FineFormModal from "../../components/FineFormModal";
-import bookLoansData from "../../data/bookLoans";
 
 export default function FinesManage() {
     const [fines, setFines] = useState<Fine[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-
-    // State cho Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchFines = async () => {
         setLoading(true);
-        const data = await FineService.getAll();
-        setFines(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        setLoading(false);
+        try {
+            const data = await FineService.getAll();
+            // Sắp xếp mới nhất lên đầu
+            setFines(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
         fetchFines();
     }, []);
 
-    // Helper: Tra cứu tên sách từ bookLoanId
-    const getBookInfo = (loanId: string) => {
-        const loan = bookLoansData.find(l => l.id === loanId);
-        return loan ? loan.bookCopyOriginalBookTitle : null;
+    // Helper
+    const getBookInfo = (fine: Fine) => {
+        return fine.bookLoan?.bookCopy.book.title || null;
     };
 
-    const handleSettleFine = async (id: string) => {
+    const handleSettleFine = async (id: number) => { // id là number
         if (!window.confirm("Confirm payment received and remove this fine?")) return;
         try {
             await FineService.settleFine(id);
             alert("Fine settled successfully!");
             fetchFines();
         } catch (error: any) {
-            alert(error.message);
+            alert(error.response?.data?.message || "Failed to settle fine");
         }
     };
 
-    // Xử lý tạo phạt mới
     const handleCreateFine = async (data: { username: string, amount: number, description: string, bookLoanId: string }) => {
         try {
             await FineService.create(data);
             alert("New fine created successfully!");
             fetchFines();
         } catch (error: any) {
-            alert(error.message);
+            alert("Error: " + (error.response?.data?.message || "Failed to create fine"));
         }
     };
 
     const filteredFines = fines.filter(f =>
-        f.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.bookLoanId.includes(searchTerm)
+        f.user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        f.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const totalAmount = fines.reduce((sum, f) => sum + f.amount, 0);
@@ -111,27 +111,26 @@ export default function FinesManage() {
                                 <tr><td colSpan={6} className="text-center py-8 text-gray-500">No active fines found.</td></tr>
                             ) : (
                                 filteredFines.map(fine => {
-                                    const bookTitle = getBookInfo(fine.bookLoanId);
+                                    const bookTitle = getBookInfo(fine);
                                     return (
                                         <tr key={fine.id} className="hover:bg-purple-50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-gray-700">{fine.username}</td>
+                                            <td className="px-6 py-4 font-bold text-gray-700">{fine.user.username}</td>
                                             <td className="px-6 py-4 font-mono font-medium text-red-600">
                                                 {fine.amount.toLocaleString()} ₫
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{fine.description}</td>
                                             <td className="px-6 py-4">
-                                                {/* Hiển thị tên sách nếu tìm thấy, nếu không hiển thị ID */}
                                                 {bookTitle ? (
                                                     <div>
                                                         <p className="text-sm font-semibold text-gray-800 line-clamp-1" title={bookTitle}>
                                                             {bookTitle}
                                                         </p>
-                                                        <p className="text-xs text-gray-400 font-mono">Ref: {fine.bookLoanId}</p>
+                                                        {fine.bookLoan && <p className="text-xs text-gray-400 font-mono">Ref: {fine.bookLoan.id}</p>}
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-gray-400 font-mono italic">
-                                                            ID: {fine.bookLoanId}
-                                                        </span>
+                                                        Manual Fine
+                                                    </span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">

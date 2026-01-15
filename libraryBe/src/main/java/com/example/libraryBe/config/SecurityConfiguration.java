@@ -40,13 +40,15 @@ public class SecurityConfiguration {
                         .requestMatchers(
                                 "/api/v1/admin/**",
                                 "/api/v1/loans/admin/**",
-                                "/api/v1/requests/admin/**"
+                                "/api/v1/requests/admin/**",
+                                "/api/v1/fines/admin/**"
                         ).hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_LIBRARY_MANAGER",
                                 "ROLE_USER_MANAGER",
                                 "ROLE_CIRCULATION_MANAGER")
                         .requestMatchers(
                                 "/api/v1/loans/**",
-                                "/api/v1/requests/**"
+                                "/api/v1/requests/**",
+                                "/api/v1/fines/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
