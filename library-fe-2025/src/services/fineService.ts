@@ -13,10 +13,12 @@ export const FineService = {
     },
 
     create: async (fineData: { username: string, amount: number, description: string, bookLoanId?: string }): Promise<Fine> => {
-        // Convert bookLoanId string sang number nếu có
+        const loanIdNum = fineData.bookLoanId ? Number(fineData.bookLoanId) : null;
+
         const payload = {
             ...fineData,
-            bookLoanId: fineData.bookLoanId ? Number(fineData.bookLoanId) : null
+            // Nếu convert ra NaN do nhập sai, hoặc bằng 0 thì gửi null
+            bookLoanId: (loanIdNum && !isNaN(loanIdNum)) ? loanIdNum : null
         };
         const response = await axiosClient.post<Fine>('/fines/admin/create', payload);
         return response.data;

@@ -43,13 +43,14 @@ export default function FinesManage() {
         }
     };
 
-    const handleCreateFine = async (data: { username: string, amount: number, description: string, bookLoanId: string }) => {
+    const handleCreateFine = async (data: { username: string, amount: number, description: string, bookLoanId?: string }) => {
         try {
             await FineService.create(data);
             alert("New fine created successfully!");
             fetchFines();
         } catch (error: any) {
-            alert("Error: " + (error.response?.data?.message || "Failed to create fine"));
+            const msg = error.response?.data?.message || "Failed to create fine";
+            alert("Error: " + msg);
         }
     };
 

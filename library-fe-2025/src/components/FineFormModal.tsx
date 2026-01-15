@@ -3,7 +3,7 @@ import { useState } from "react";
 interface FineFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: { username: string, amount: number, description: string, bookLoanId: string }) => void;
+    onSubmit: (data: { username: string, amount: number, description: string, bookLoanId?: string }) => void;
 }
 
 export default function FineFormModal({ isOpen, onClose, onSubmit }: FineFormModalProps) {
@@ -14,12 +14,14 @@ export default function FineFormModal({ isOpen, onClose, onSubmit }: FineFormMod
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
         onSubmit({
             username,
             amount,
             description,
-            bookLoanId: bookLoanId || "N/A"
+            bookLoanId: bookLoanId.trim() === "" ? undefined : bookLoanId
         });
+
         // Reset form
         setUsername("");
         setAmount(0);
@@ -39,6 +41,7 @@ export default function FineFormModal({ isOpen, onClose, onSubmit }: FineFormMod
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {/* Username */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <input
@@ -51,6 +54,7 @@ export default function FineFormModal({ isOpen, onClose, onSubmit }: FineFormMod
                         />
                     </div>
 
+                    {/* Amount */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Amount (VND)</label>
                         <input
@@ -64,6 +68,7 @@ export default function FineFormModal({ isOpen, onClose, onSubmit }: FineFormMod
                         />
                     </div>
 
+                    {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                         <textarea
@@ -71,18 +76,22 @@ export default function FineFormModal({ isOpen, onClose, onSubmit }: FineFormMod
                             rows={3}
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            placeholder="Reason for fine..."
+                            placeholder="Reason for fine (e.g. Lost book, Damaged page...)"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                         />
                     </div>
 
+                    {/* Book Loan ID */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Related Loan ID (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Related Loan ID <span className="text-gray-400 font-normal">(Optional - Must be a number)</span>
+                        </label>
                         <input
-                            type="text"
+                            type="number" // Bắt buộc nhập số
+                            min="1"
                             value={bookLoanId}
                             onChange={e => setBookLoanId(e.target.value)}
-                            placeholder="e.g. loan-123"
+                            placeholder="e.g. 123"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
                         />
                     </div>
