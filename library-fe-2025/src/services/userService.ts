@@ -1,61 +1,46 @@
-import usersData, {type User } from '../data/users';
+import axiosClient from '../api/axiosClient';
+import type {User} from '../types/user';
 
-const USER_STORAGE_KEY = 'library_users';
+export interface UpdateProfileRequest {
+    name: string;
+    email: string;
+}
 
-// Helper lấy data
-const getStoredUsers = (): User[] => {
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(usersData));
-    return usersData;
-};
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}
 
-const userService = {
+export const userService = {
+    //Admin
     getAll: async (): Promise<User[]> => {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return getStoredUsers();
+        const response = await axiosClient.get<User[]>('/admin/users');
+        return response.data.map(user => ({
+            ...user,
+            role: user.roles && user.roles.length > 0 ? user.roles[0].name : 'USER'
+        }));
     },
 
-    create: async (userData: Omit<User, 'id' | 'joinedDate' | 'avatarUrl'>): Promise<User> => {
-        const users = getStoredUsers();
-
-        if (users.some(u => u.username === userData.username)) {
-            throw new Error("Username already exists!");
-        }
-
-        const newUser: User = {
-            ...userData,
-            id: Date.now().toString(),
-            joinedDate: new Date().toISOString(),
-            avatarUrl: `https://ui-avatars.com/api/?name=${userData.name}&background=random`,
-            status: userData.status || 'Active'
-        };
-
-        const updatedUsers = [newUser, ...users];
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUsers));
-        return newUser;
+    create: async (data: any) => {
+        return await axiosClient.post('/admin/users', data);
     },
 
-    update: async (id: string, userData: Partial<User>): Promise<User> => {
-        const users = getStoredUsers();
-        const index = users.findIndex(u => u.id === id);
-        if (index === -1) throw new Error("User not found");
-
-        const updatedUser = { ...users[index], ...userData };
-        users[index] = updatedUser;
-
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(users));
-        return updatedUser;
+    update: async (id: number, data: any) => {
+        return await axiosClient.put(`/admin/users/${id}`, data);
     },
 
-    delete: async (id: string): Promise<void> => {
-        const users = getStoredUsers();
-        // Không cho xóa chính mình (giả lập logic, không thể xóa Super Admin)
-        if (id === '99') throw new Error("Cannot delete Super Admin!");
+    delete: async (id: number) => {
+        return await axiosClient.delete(`/admin/users/${id}`);
+    },
 
-        const filteredUsers = users.filter(u => u.id !== id);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(filteredUsers));
+    // User
+    updateProfile: async (data: UpdateProfileRequest) => {
+        const response = await axiosClient.put('/users/profile', data);
+        return response.data;
+    },
+
+    changePassword: async (data: ChangePasswordRequest) => {
+        return await axiosClient.put('/users/change-password', data);
     }
 };
-
-export default userService;

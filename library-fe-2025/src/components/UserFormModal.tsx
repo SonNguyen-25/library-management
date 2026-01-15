@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type {User, UserRole} from "../data/users";
+import type {User} from "../types/user";
 
 interface UserFormModalProps {
     isOpen: boolean;
@@ -12,23 +12,21 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, initialData }
     const [name, setName] = useState("");
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState(""); // Chỉ dùng khi tạo mới hoặc đổi pass
-    const [role, setRole] = useState<UserRole>("USER");
-    const [status, setStatus] = useState<"Active" | "Inactive" | "Banned">("Active");
+    const [role, setRole] = useState("USER");
+    const [status, setStatus] = useState("Active");
 
     useEffect(() => {
         if (initialData) {
             setName(initialData.name);
             setUsername(initialData.username);
             setEmail(initialData.email);
-            setRole(initialData.role);
+            // Lấy role từ prop role từ service map ra, hoặc lấy từ mảng
+            setRole(initialData.role || (initialData.roles?.[0]?.name) || "USER");
             setStatus(initialData.status);
-            setPassword(""); // Reset pass khi edit
         } else {
             setName("");
             setUsername("");
             setEmail("");
-            setPassword("");
             setRole("USER");
             setStatus("Active");
         }
@@ -36,20 +34,7 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, initialData }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        const userData: any = {
-            name,
-            username,
-            email,
-            role,
-            status
-        };
-
-        // Nếu là thêm mới HOẶC có nhập password khi edit thì mới gửi field password
-        if (!initialData || password) {
-            userData.password = password;
-        }
-
+        const userData = { name, username, email, role, status };
         onSubmit(userData);
         onClose();
     };
@@ -81,11 +66,14 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, initialData }
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                            <select value={role} onChange={(e) => setRole(e.target.value as UserRole)}
+                            {/* DROPDOWN 5 ROLE */}
+                            <select value={role} onChange={(e) => setRole(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
                                 <option value="USER">User</option>
-                                <option value="STAFF">Staff</option>
-                                <option value="ADMIN">Admin</option>
+                                <option value="SUPER_ADMIN">Super Admin</option>
+                                <option value="LIBRARY_MANAGER">Library Manager</option>
+                                <option value="USER_MANAGER">User Manager</option>
+                                <option value="CIRCULATION_MANAGER">Circulation Manager</option>
                             </select>
                         </div>
                     </div>
@@ -96,18 +84,15 @@ export default function UserFormModal({ isOpen, onClose, onSubmit, initialData }
                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Password {initialData && <span className="text-gray-400 font-normal">(Leave blank to keep)</span>}
-                        </label>
-                        <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                               required={!initialData} // Bắt buộc nếu là thêm mới
-                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
-                    </div>
+                    {!initialData && (
+                        <div className="p-3 bg-blue-50 text-blue-700 text-sm rounded-lg border border-blue-200">
+                            ℹ️ Default password for new users is <b>123456</b>
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select value={status} onChange={(e) => setStatus(e.target.value as any)}
+                        <select value={status} onChange={(e) => setStatus(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>

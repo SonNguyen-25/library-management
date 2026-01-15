@@ -41,14 +41,18 @@ public class SecurityConfiguration {
                                 "/api/v1/admin/**",
                                 "/api/v1/loans/admin/**",
                                 "/api/v1/requests/admin/**",
-                                "/api/v1/fines/admin/**"
+                                "/api/v1/fines/admin/**",
+                                "/api/v1/admin/books/**"
                         ).hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_LIBRARY_MANAGER",
                                 "ROLE_USER_MANAGER",
                                 "ROLE_CIRCULATION_MANAGER")
                         .requestMatchers(
                                 "/api/v1/loans/**",
                                 "/api/v1/requests/**",
-                                "/api/v1/fines/**"
+                                "/api/v1/fines/**",
+                                "/api/v1/subscriptions/**",
+                                "/api/v1/notifications/**",
+                                "/api/v1/users/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

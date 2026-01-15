@@ -3,12 +3,8 @@ package com.example.libraryBe.service;
 import com.example.libraryBe.entity.*;
 import com.example.libraryBe.model.BookCopyStatus;
 import com.example.libraryBe.model.LoanStatus;
-import com.example.libraryBe.repository.BookCopyRepository;
-import com.example.libraryBe.repository.BookLoanRepository;
-import com.example.libraryBe.repository.FineRepository;
-import com.example.libraryBe.repository.UserRepository;
+import com.example.libraryBe.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +20,8 @@ public class LoanService {
     private final BookCopyRepository bookCopyRepository;
     private final UserRepository userRepository;
     private final FineRepository fineRepository;
-
+    private final SubscriptionRepository subscriptionRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public BookLoan createLoanFromRequest(User user, Book book) {
@@ -65,6 +62,14 @@ public class LoanService {
         copy.setStatus(BookCopyStatus.AVAILABLE);
         bookCopyRepository.save(copy);
 
+        List<Subscription> subs = subscriptionRepository.findByBookId(copy.getBook().getId());
+
+        for (Subscription sub : subs) {
+            notificationService.createNotification(
+                    sub.getUser(),
+                    "Sách '" + copy.getBook().getTitle() + "' đã có hàng! Hãy mượn ngay."
+            );
+        }
         // LOGIC TÍNH PHẠT TỰ ĐỘNG
         long overdueDays = ChronoUnit.DAYS.between(loan.getDueDate().toLocalDate(), returnDate.toLocalDate());
 

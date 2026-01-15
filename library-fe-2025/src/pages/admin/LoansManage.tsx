@@ -66,6 +66,7 @@ export default function LoansManage() {
                                 <th className="px-6 py-4">Book Title</th>
                                 <th className="px-6 py-4">Borrower</th>
                                 <th className="px-6 py-4">Loan Date</th>
+                                <th className="px-6 py-4">Return Date</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4 text-right">Action</th>
                             </tr>
@@ -86,6 +87,9 @@ export default function LoansManage() {
                                         <td className="px-6 py-4 font-bold text-gray-700">{loan.user.username}</td>
                                         <td className="px-6 py-4 text-sm text-gray-600">
                                             {new Date(loan.loanDate).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                            {loan.returnDate ? new Date(loan.returnDate).toLocaleDateString() : "-"}
                                         </td>
                                         <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${

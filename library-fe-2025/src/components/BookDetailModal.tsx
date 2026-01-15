@@ -4,6 +4,7 @@ import type {Book} from "../types/book";
 import type {Review} from "../data/reviews";
 import { reviewService } from "../services/reviewService";
 import { requestService } from "../services/bookRequestService";
+import { subscriptionService } from "../services/subscriptionService";
 
 interface BookDetailModalProps {
     isOpen: boolean;
@@ -71,12 +72,22 @@ export default function BookDetailModal({ isOpen, onClose, book }: BookDetailMod
         }
     };
 
-    const handleSubscribe = () => {
+    const handleSubscribe = async () => {
         if (!isAuthenticated) {
             alert("Bạn cần đăng nhập để đăng ký nhận thông báo!");
             return;
         }
-        alert(`Đã đăng ký nhận thông báo cho sách "${book?.title}".`);
+
+        if (!book) return;
+
+        if (confirm(`Đăng ký nhận thông báo khi sách "${book.title}" có hàng?`)) {
+            try {
+                await subscriptionService.subscribe(book.id);
+                alert(`Đã đăng ký! Chúng tôi sẽ thông báo khi sách có hàng.`);
+            } catch (error: any) {
+                alert("⚠️ " + (error.response?.data || "Đăng ký thất bại"));
+            }
+        }
     };
 
     if (!isOpen || !book) return null;

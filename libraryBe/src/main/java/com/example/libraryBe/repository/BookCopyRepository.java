@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     Optional<BookCopy> findFirstByBookIdAndStatus(Long bookId, BookCopyStatus status);
     long countByBookIdAndStatus(Long bookId, BookCopyStatus status);
+    void deleteByBookId(Long bookId);
 }

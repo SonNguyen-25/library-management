@@ -15,7 +15,9 @@ export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }
     const [authorsStr, setAuthorsStr] = useState("");
     const [categoriesStr, setCategoriesStr] = useState("");
     const [publisherName, setPublisherName] = useState("");
-    const [available, setAvailable] = useState(true);
+
+    // State cho số lượng copy (Mặc định 5)
+    const [initialCopies, setInitialCopies] = useState(5);
 
     useEffect(() => {
         if (initialData) {
@@ -25,7 +27,6 @@ export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }
             setAuthorsStr(initialData.authors.join(", "));
             setCategoriesStr(initialData.categories.join(", "));
             setPublisherName(initialData.publisherName);
-            setAvailable(initialData.available);
         } else {
             // Reset khi thêm mới
             setTitle("");
@@ -34,7 +35,7 @@ export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }
             setAuthorsStr("");
             setCategoriesStr("");
             setPublisherName("");
-            setAvailable(true);
+            setInitialCopies(5);
         }
     }, [initialData, isOpen]);
 
@@ -45,12 +46,10 @@ export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }
             title,
             description,
             coverUrl,
-            // Tách chuỗi thành mảng
-            authors: authorsStr.split(",").map(s => s.trim()).filter(s => s),
-            categories: categoriesStr.split(",").map(s => s.trim()).filter(s => s),
             publisherName,
-            available,
-            rating: initialData?.rating || 0
+            authorNames: authorsStr.split(",").map(s => s.trim()).filter(s => s),
+            categoryNames: categoriesStr.split(",").map(s => s.trim()).filter(s => s),
+            initialCopies: initialData ? undefined : initialCopies
         };
 
         onSubmit(bookData);
@@ -100,24 +99,23 @@ export default function BookFormModal({ isOpen, onClose, onSubmit, initialData }
                         </div>
                     </div>
 
-                    {/* Publisher */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Publisher Name</label>
-                        <input type="text" value={publisherName} onChange={e => setPublisherName(e.target.value)}
-                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                               placeholder="NXB Kim Dong"/>
-                    </div>
+                    {/* Publisher & Copies */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Publisher Name</label>
+                            <input type="text" value={publisherName} onChange={e => setPublisherName(e.target.value)}
+                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                   placeholder="NXB Kim Dong"/>
+                        </div>
 
-                    {/* Status Checkbox */}
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="availableCheck"
-                            checked={available}
-                            onChange={e => setAvailable(e.target.checked)}
-                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                        />
-                        <label htmlFor="availableCheck" className="text-sm font-medium text-gray-700">Is Available?</label>
+                        {!initialData && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Initial Copies</label>
+                                <input type="number" min="1" value={initialCopies} onChange={e => setInitialCopies(parseInt(e.target.value))}
+                                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Description */}

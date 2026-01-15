@@ -4,9 +4,10 @@ interface AdminBookProps {
     book: Book;
     onEdit: (book: Book) => void;
     onDelete: (id: number) => void;
+    onImport: (id: number) => void;
 }
 
-export default function AdminBook({ book, onEdit, onDelete }: AdminBookProps) {
+export default function AdminBook({ book, onEdit, onDelete, onImport }: AdminBookProps) {
     return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-full hover:shadow-md transition-shadow">
             <div className="flex gap-4 mb-4">
@@ -41,6 +42,9 @@ export default function AdminBook({ book, onEdit, onDelete }: AdminBookProps) {
                     className="flex-1 bg-yellow-50 text-yellow-700 py-2 rounded-md text-sm font-medium hover:bg-yellow-100 transition-colors"
                 >
                     Edit
+                </button>
+                <button onClick={() => onImport(book.id)} className="flex-1 bg-blue-50 text-blue-700 py-2 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors">
+                    + Import
                 </button>
                 <button
                     onClick={() => onDelete(book.id)}

@@ -46,13 +46,32 @@ export default function BookManage() {
     };
 
     const handleDeleteClick = async (id: number) => {
-        if (window.confirm("Are you sure you want to delete this book?")) {
+        if (window.confirm("Are you sure you want to delete this book? This will also delete all copies and history.")) {
             try {
                 await bookService.deleteBook(id);
-                alert("Deleted (Mock)!");
+                alert("Deleted book successfully!");
                 fetchBooks();
-            } catch (e) {
-                alert("Delete API not implemented yet!");
+            } catch (error: any) {
+                alert("Error: " + (error.response?.data?.message || "Failed to delete"));
+            }
+        }
+    };
+
+    const handleImportClick = async (id: number) => {
+        const input = prompt("Nhập số lượng sách muốn thêm vào kho:", "5");
+        if (input) {
+            const amount = parseInt(input);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Vui lòng nhập số hợp lệ!");
+                return;
+            }
+
+            try {
+                await bookService.addCopies(id, amount);
+                alert(`Đã nhập thêm ${amount} cuốn thành công!`);
+                fetchBooks();
+            } catch (error: any) {
+                alert("Lỗi: " + (error.response?.data?.message || "Nhập hàng thất bại"));
             }
         }
     };
@@ -61,14 +80,19 @@ export default function BookManage() {
         try {
             if (editingBook) {
                 await bookService.updateBook(editingBook.id, data);
+                alert("Book updated successfully!");
             } else {
-                await bookService.createBook(data);
+                // data từ Form gửi lên: title, description, coverUrl, authors (mảng string), categories (mảng string), publisherName
+                await bookService.createBook({
+                    ...data,
+                    initialCopies: 5
+                });
+                alert("New book created successfully!");
             }
-            alert("Saved (Mock)!");
             fetchBooks();
             setIsModalOpen(false);
-        } catch (e) {
-            alert("Save API not implemented yet!");
+        } catch (error: any) {
+            alert("Error: " + (error.response?.data?.message || "Failed to save book"));
         }
     };
 
@@ -118,6 +142,7 @@ export default function BookManage() {
                                     book={book}
                                     onEdit={handleEditClick}
                                     onDelete={handleDeleteClick}
+                                    onImport={handleImportClick}
                                 />
                             ))}
                         </div>

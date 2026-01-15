@@ -35,11 +35,8 @@ export default function RegisterPage() {
 
         } catch (err: any) {
             console.error("Register Error:", err);
-            if (typeof err === 'string') {
-                setError(err);
-            } else {
-                setError("Đăng ký thất bại. Username có thể đã tồn tại!");
-            }
+            const message = err.response?.data?.message || err.response?.data || "Đăng ký thất bại. Vui lòng thử lại!";
+            setError(typeof message === 'string' ? message : JSON.stringify(message));
         }
     };
 

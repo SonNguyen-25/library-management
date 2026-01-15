@@ -31,7 +31,22 @@ export const bookService = {
         const response = await axiosClient.get<Category[]>('/public/categories');
         return response.data;
     },
-    deleteBook: async (id: number) => axiosClient.delete(`/admin/books/${id}`),
-    createBook: async (data: any) => axiosClient.post('/admin/books', data),
-    updateBook: async (id: number, data: any) => axiosClient.put(`/admin/books/${id}`, data),
+    deleteBook: async (id: number) => {
+        return await axiosClient.delete(`/admin/books/${id}`);
+    },
+
+    createBook: async (data: any) => {
+        // Backend cần authorNames (List string), categoryNames (List string)
+        return await axiosClient.post('/admin/books', data);
+    },
+
+    updateBook: async (id: number, data: any) => {
+        return await axiosClient.put(`/admin/books/${id}`, data);
+    },
+
+    addCopies: async (bookId: number, amount: number) => {
+        return await axiosClient.post(`/admin/books/${bookId}/copies`, null, {
+            params: { amount }
+        });
+    }
 };
