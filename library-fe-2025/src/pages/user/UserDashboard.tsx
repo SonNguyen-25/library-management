@@ -21,6 +21,14 @@ export default function UserDashboard() {
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+    // Gọi API lấy 4 cuốn sách đầu tiên để hiển thị ở Dashboard
+    const fetchRecommendedBooks = async () => {
+        try {
+            const data = await bookService.getPublicBooks(1, 4);
+            setBooks(data.data);
+        } catch (error) { console.error(error); }
+    };
+
     useEffect(() => {
         if (user) {
             const currentUsername = user.username;
@@ -32,17 +40,6 @@ export default function UserDashboard() {
             setLoans(userLoans);
             setFinesList(userFines);
             setRequestsList(userRequests);
-
-            // Gọi API lấy 4 cuốn sách đầu tiên để hiển thị ở Dashboard
-            const fetchRecommendedBooks = async () => {
-                try {
-                    // page=1, size=4
-                    const data = await bookService.getPublicBooks(1, 4);
-                    setBooks(data.data);
-                } catch (error) {
-                    console.error("Failed to load books", error);
-                }
-            };
             fetchRecommendedBooks();
         }
     }, [user]);
@@ -208,6 +205,7 @@ export default function UserDashboard() {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 book={selectedBook}
+                onUpdate={fetchRecommendedBooks}
             />
         </>
     );

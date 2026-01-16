@@ -14,4 +14,5 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
     List<BookLoan> findByUserAndStatusOrderByLoanDateDesc(User user, LoanStatus status);
     // Admin: Lấy tất cả sắp xếp ngày giảm dần
     List<BookLoan> findAllByOrderByLoanDateDesc();
+    long countByStatus(LoanStatus status);
 }

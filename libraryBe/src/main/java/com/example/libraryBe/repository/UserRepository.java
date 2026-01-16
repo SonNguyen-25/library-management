@@ -1,6 +1,7 @@
 package com.example.libraryBe.repository;
 
 import com.example.libraryBe.entity.User;
+import com.example.libraryBe.model.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    long countByStatus(String status);
 }

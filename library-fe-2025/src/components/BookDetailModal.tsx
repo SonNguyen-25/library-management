@@ -1,96 +1,145 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../hooks/useAuth";
-import type {Book} from "../types/book";
-import type {Review} from "../data/reviews";
+import type { Book } from "../types/book";
+import type { Review } from "../types/review";
 import { reviewService } from "../services/reviewService";
 import { requestService } from "../services/bookRequestService";
 import { subscriptionService } from "../services/subscriptionService";
+import { bookService } from "../services/bookService";
 
 interface BookDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     book: Book | null;
+    onUpdate?: () => void;
 }
 
-export default function BookDetailModal({ isOpen, onClose, book }: BookDetailModalProps) {
+export default function BookDetailModal({ isOpen, onClose, book, onUpdate }: BookDetailModalProps) {
     const { user, isAuthenticated } = useAuth();
-
+    // State dữ liệu
+    const [currentBook, setCurrentBook] = useState<Book | null>(null);
     const [reviews, setReviews] = useState<Review[]>([]);
-    const [userRating, setUserRating] = useState(0);
-    const [userComment, setUserComment] = useState("");
+    // State Form Tạo mới
+    const [newRating, setNewRating] = useState(0);
+    const [newComment, setNewComment] = useState("");
+    // State Form Edit
+    const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+    const [editRating, setEditRating] = useState(0);
+    const [editComment, setEditComment] = useState("");
 
+    // Lấy dữ liệu
+    const loadData = useCallback(async (bookId: number) => {
+        try {
+            // Load reviews
+            const reviewsData = await reviewService.getReviewsByBookId(bookId);
+            setReviews(reviewsData);
+            // Load book info mới nhất để lấy rating
+            const bookData = await bookService.getBookById(bookId);
+            setCurrentBook(bookData);
+        } catch (e) {
+            console.error("Lỗi load data modal:", e);
+        }
+    }, []);
+
+    // useEffect chỉ chạy khi mở modal hoặc đổi sách (Dựa vào book.id)
     useEffect(() => {
-        if (book) {
-            setReviews(reviewService.getReviewsByBookId(book.id));
-            setUserRating(0);
-            setUserComment("");
+        if (isOpen && book) {
+            // Chỉ reset khi mở sách MỚI
+            setCurrentBook(book);
+            setNewRating(0);
+            setNewComment("");
+            setEditingReviewId(null); // Reset edit mode
+            // Gọi hàm load
+            loadData(book.id);
         }
-    }, [book, isOpen]);
+    }, [isOpen, book?.id]); // Chỉ phụ thuộc book.id, không phụ thuộc object book
 
-    const handleSubmitReview = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!isAuthenticated || !user) {
-            alert("Vui lòng đăng nhập để viết đánh giá!");
-            return;
+    // Tạo Review mới
+    const handlePostReview = async () => {
+        if (!isAuthenticated || !currentBook) return;
+        if (newRating === 0) return alert("Please select a rating!");
+
+        try {
+            await reviewService.addOrUpdateReview(currentBook.id, newRating, newComment);
+            await loadData(currentBook.id);
+            // Reset form nhập
+            setNewRating(0);
+            setNewComment("");
+
+            // Báo ra ngoài để cập nhật danh sách sách
+            if (onUpdate) onUpdate();
+
+            alert("Review posted!");
+        } catch (error: any) {
+            alert("Error: " + (error.response?.data?.message || "Failed to post review"));
         }
+    };
+    // Chuẩn bị Edit
+    const startEdit = (review: Review) => {
+        setEditingReviewId(review.id);
+        setEditRating(review.rating);
+        setEditComment(review.comment);
+    };
+    // Lưu Edit
+    const handleUpdateReview = async () => {
+        if (!currentBook) return;
+        try {
+            await reviewService.addOrUpdateReview(currentBook.id, editRating, editComment);
 
-        if (!book) return;
-        if (userRating === 0) {
-            alert("Vui lòng chọn số sao đánh giá!");
-            return;
+            await loadData(currentBook.id); // Reload lại trong modal
+            setEditingReviewId(null); // Thoát chế độ edit
+
+            if (onUpdate) onUpdate();
+
+            alert("Review updated!");
+        } catch (error: any) {
+            alert("Error: " + (error.response?.data?.message || "Failed to update"));
         }
+    };
 
-        const newReview = reviewService.addReview(
-            book.id,
-            user.username,
-            user.name || "Guest User",
-            userRating,
-            userComment
-        );
+    // Xóa Review
+    const handleDeleteReview = async (reviewId: number) => {
+        if (!currentBook) return;
+        if (!confirm("Are you sure you want to delete your review?")) return;
 
-        setReviews([newReview, ...reviews]);
-        setUserRating(0);
-        setUserComment("");
+        try {
+            await reviewService.deleteReview(reviewId);
+            await loadData(currentBook.id);
+            if (onUpdate) onUpdate();
+        } catch (error: any) {
+            alert("Error: " + (error.response?.data?.message || "Failed to delete"));
+        }
     };
 
     const handleBorrowClick = async () => {
-        if (!isAuthenticated) {
-            alert("Bạn cần đăng nhập để mượn sách!");
-            return;
-        }
-
-        if (!book) return;
-
-        if (confirm(`Bạn có muốn gửi yêu cầu mượn sách "${book.title}" không?`)) {
+        if (!isAuthenticated) return alert("Please login to borrow!");
+        if (!currentBook) return;
+        if (confirm(`Send borrow request for "${currentBook.title}"?`)) {
             try {
-                await requestService.createBorrowRequest(book.id);
-                alert("✅ Gửi yêu cầu thành công! Vui lòng chờ thủ thư phê duyệt.");
+                await requestService.createBorrowRequest(currentBook.id);
+                alert("Request sent! Please wait for approval.");
                 onClose();
             } catch (error: any) {
-                alert("Lỗi: " + (error.response?.data?.message || error.response?.data || "Không thể gửi yêu cầu"));
+                alert("Error: " + (error.response?.data?.message || "Failed to request"));
             }
         }
     };
 
     const handleSubscribe = async () => {
-        if (!isAuthenticated) {
-            alert("Bạn cần đăng nhập để đăng ký nhận thông báo!");
-            return;
-        }
-
-        if (!book) return;
-
-        if (confirm(`Đăng ký nhận thông báo khi sách "${book.title}" có hàng?`)) {
-            try {
-                await subscriptionService.subscribe(book.id);
-                alert(`Đã đăng ký! Chúng tôi sẽ thông báo khi sách có hàng.`);
-            } catch (error: any) {
-                alert("⚠️ " + (error.response?.data || "Đăng ký thất bại"));
-            }
+        if (!isAuthenticated) return alert("Please login to subscribe!");
+        if (!currentBook) return;
+        try {
+            await subscriptionService.subscribe(currentBook.id);
+            alert(`Subscribed to "${currentBook.title}"!`);
+        } catch (error: any) {
+            alert("Warning: " + (error.response?.data || "Failed"));
         }
     };
 
-    if (!isOpen || !book) return null;
+    if (!isOpen || !currentBook) return null;
+
+    // Check xem user đã review chưa
+    const userHasReview = user && reviews.some(r => r.user.username === user.username);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -99,31 +148,16 @@ export default function BookDetailModal({ isOpen, onClose, book }: BookDetailMod
                 {/* CỘT TRÁI */}
                 <div className="w-full md:w-1/3 bg-gray-50 p-6 flex flex-col items-center border-r border-gray-100">
                     <div className="w-48 aspect-[2/3] shadow-lg rounded-lg overflow-hidden mb-6">
-                        <img
-                            src={book.coverUrl}
-                            alt={book.title}
-                            className="w-full h-full object-cover"
-                        />
+                        <img src={currentBook.coverUrl} alt={currentBook.title} className="w-full h-full object-cover" />
                     </div>
-
                     <div className="w-full space-y-3">
-                        <button
-                            onClick={handleBorrowClick}
-                            disabled={!book.available}
-                            className={`w-full py-3 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2
-                                ${book.available
-                                ? "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200"
-                                : "bg-gray-400 cursor-not-allowed"}`}
-                        >
-                            {book.available ? "Borrow This Book" : "Currently Unavailable"}
+                        <button onClick={handleBorrowClick} disabled={!currentBook.available}
+                                className={`w-full py-3 rounded-xl font-bold text-white transition-all ${currentBook.available ? "bg-blue-600 hover:bg-blue-700 shadow-lg" : "bg-gray-400 cursor-not-allowed"}`}>
+                            {currentBook.available ? "Borrow This Book" : "Currently Unavailable"}
                         </button>
-
-                        {!book.available && (
-                            <button
-                                onClick={handleSubscribe}
-                                className="w-full py-3 rounded-xl font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all"
-                            >
-                                🔔 Subscribe for Notification
+                        {!currentBook.available && (
+                            <button onClick={handleSubscribe} className="w-full py-3 rounded-xl font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200">
+                                🔔 Subscribe Notification
                             </button>
                         )}
                     </div>
@@ -133,76 +167,94 @@ export default function BookDetailModal({ isOpen, onClose, book }: BookDetailMod
                 <div className="w-full md:w-2/3 p-6 overflow-y-auto max-h-[90vh]">
                     <div className="flex justify-between items-start">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-1">{book.title}</h2>
-
-                            {/* RATING */}
+                            <h2 className="text-2xl font-bold text-gray-900 mb-1">{currentBook.title}</h2>
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="flex text-yellow-400 text-lg">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <span key={star}>
-                                            {star <= Math.round(book.rating) ? "★" : "☆"}
-                                        </span>
-                                    ))}
-                                </div>
-                                <span className="text-sm text-gray-500 font-medium">
-                                    ({book.rating.toFixed(1)})
-                                </span>
+                                <span className="text-yellow-400 text-lg">★</span>
+                                <span className="text-gray-700 font-bold">{currentBook.rating.toFixed(1)}</span>
+                                <span className="text-gray-400 text-sm">({reviews.length} reviews)</span>
                             </div>
-
-                            <div className="flex flex-wrap items-center gap-2 mb-4">
-                                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
-                                    {book.publisherName}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${book.available ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                                    {book.available ? "Available" : "Out of Stock"}
-                                </span>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">{currentBook.publisherName}</span>
+                                <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">{currentBook.categories.join(", ")}</span>
                             </div>
-
-                            <div className="text-sm text-gray-600 mb-4 space-y-1">
-                                <p><span className="font-semibold">Author(s):</span> {book.authors.join(", ")}</p>
-                                <p><span className="font-semibold">Category:</span> {book.categories.join(", ")}</p>
-                            </div>
+                            <p className="text-sm text-gray-600 mb-4"><span className="font-semibold">Author(s):</span> {currentBook.authors.join(", ")}</p>
                         </div>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
                     </div>
 
-                    <div className="prose prose-sm text-gray-600 mb-8">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Description</h3>
-                        <p>{book.description}</p>
-                    </div>
-
+                    <div className="prose prose-sm text-gray-600 mb-8"><p>{currentBook.description}</p></div>
                     <hr className="my-6 border-gray-100" />
 
-                    {/* REVIEWS SECTION */}
+                    {/* --- REVIEW SECTION --- */}
                     <div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            Reviews <span className="text-gray-400 text-sm font-normal">({reviews.length})</span>
-                        </h3>
-                        {isAuthenticated ? (
-                            <div className="bg-gray-50 p-4 rounded-xl mb-6">
-                                <h4 className="font-semibold text-sm text-gray-700 mb-2">Write a review as {user?.name}</h4>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Reviews</h3>
+
+                        {/* FORM TẠO MỚI (Chỉ hiện khi user chưa review và không đang edit) */}
+                        {isAuthenticated && !userHasReview && !editingReviewId && (
+                            <div className="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
+                                <h4 className="font-semibold text-sm text-gray-700 mb-2">Write a review</h4>
                                 <div className="flex gap-1 mb-3">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <button key={star} type="button" onClick={() => setUserRating(star)} className={`text-2xl transition-colors ${star <= userRating ? "text-yellow-400" : "text-gray-300"}`}>★</button>
+                                        <button key={star} onClick={() => setNewRating(star)} className={`text-2xl ${star <= newRating ? "text-yellow-400" : "text-gray-300"}`}>★</button>
                                     ))}
                                 </div>
-                                <textarea value={userComment} onChange={(e) => setUserComment(e.target.value)} placeholder="Share your thoughts..." className="w-full p-3 rounded-lg border border-gray-200 outline-none text-sm mb-2" rows={2}/>
-                                <button onClick={handleSubmitReview} className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-black transition-colors">Post Review</button>
+                                <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Share your thoughts..." className="w-full p-3 rounded-lg border border-gray-200 text-sm mb-2 focus:ring-2 focus:ring-blue-100 outline-none" rows={3}/>
+                                <button onClick={handlePostReview} className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition">Post Review</button>
                             </div>
-                        ) : (
-                            <div className="bg-gray-50 p-4 rounded-xl mb-6 text-center text-sm text-gray-500">Please <span className="font-bold text-blue-600">Login</span> to write a review.</div>
                         )}
+
+                        {/* LIST REVIEWS */}
                         <div className="space-y-4">
-                            {reviews.map((review) => (
-                                <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="font-semibold text-gray-900">{review.userName}</span>
-                                        <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                            {reviews.map((review) => {
+                                const isMyReview = user && review.user.username === user.username;
+                                const isEditing = editingReviewId === review.id;
+
+                                return (
+                                    <div key={review.id} className={`p-4 rounded-xl ${isMyReview ? "bg-blue-50 border border-blue-100" : "border-b border-gray-100"}`}>
+
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                                    {review.user.username.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-gray-900">{review.user.username}</p>
+                                                    <p className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Nút Edit/Delete chỉ hiện khi không đang edit */}
+                                            {isMyReview && !isEditing && (
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => startEdit(review)} className="text-xs font-bold text-blue-600 hover:underline">Edit</button>
+                                                    <button onClick={() => handleDeleteReview(review.id)} className="text-xs font-bold text-red-600 hover:underline">Delete</button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Nội dung hoặc Form Edit */}
+                                        {isEditing ? (
+                                            <div className="mt-2 bg-white p-3 rounded-lg border border-blue-200">
+                                                <div className="flex gap-1 mb-2">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <button key={star} onClick={() => setEditRating(star)} className={`text-lg ${star <= editRating ? "text-yellow-400" : "text-gray-300"}`}>★</button>
+                                                    ))}
+                                                </div>
+                                                <textarea value={editComment} onChange={e => setEditComment(e.target.value)} className="w-full p-2 border rounded-lg text-sm mb-2 outline-none" rows={2}/>
+                                                <div className="flex gap-2">
+                                                    <button onClick={handleUpdateReview} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-bold">Save</button>
+                                                    <button onClick={() => setEditingReviewId(null)} className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400 font-bold">Cancel</button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="flex text-yellow-400 text-sm mb-1">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
+                                                <p className="text-gray-700 text-sm">{review.comment}</p>
+                                            </>
+                                        )}
                                     </div>
-                                    <div className="flex text-yellow-400 text-sm mb-1">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
-                                    <p className="text-gray-600 text-sm">{review.comment}</p>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

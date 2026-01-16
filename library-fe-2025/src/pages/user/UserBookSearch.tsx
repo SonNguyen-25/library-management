@@ -51,22 +51,18 @@ export default function UserBookSearch() {
     }, [searchTerm]);
 
     // Gọi API Search khi bất kỳ điều kiện nào thay đổi
-    useEffect(() => {
-        const fetchBooks = async () => {
-            setLoading(true);
-            try {
-                // Truyền đủ tham số page, size, search, authorId, categoryId
-                const data = await bookService.getPublicBooks(page, 12, debouncedSearch, selectedAuthor, selectedCategory);
-                setBooks(data.data);
-                setTotalPages(data.totalPages);
-            } catch (error) {
-                console.error("Error fetching books:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchBooksData = async () => {
+        setLoading(true);
+        try {
+            const data = await bookService.getPublicBooks(page, 12, debouncedSearch, selectedAuthor, selectedCategory);
+            setBooks(data.data);
+            setTotalPages(data.totalPages);
+        } catch (error) { console.error(error); }
+        finally { setLoading(false); }
+    };
 
-        fetchBooks();
+    useEffect(() => {
+        fetchBooksData();
     }, [page, debouncedSearch, selectedAuthor, selectedCategory]);
 
     // Handler reset
@@ -203,6 +199,7 @@ export default function UserBookSearch() {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 book={selectedBook}
+                onUpdate={fetchBooksData}
             />
         </>
     );
