@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type {Category} from "../data/categories";
+import type {Category} from "../types/category";
 
 interface Props {
     isOpen: boolean;

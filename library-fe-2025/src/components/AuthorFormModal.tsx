@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type {Author} from "../data/authors";
+import type {Author} from "../types/author";
 
 interface Props {
     isOpen: boolean;

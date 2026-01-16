@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type {Publisher} from "../data/publishers";
+import type {Publisher} from "../types/publisher";
 
 interface Props {
     isOpen: boolean;
