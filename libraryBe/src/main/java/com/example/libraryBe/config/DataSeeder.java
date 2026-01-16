@@ -35,6 +35,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedRolesAndUsers() {
+        // Tạo Permission
         if (permissionRepository.count() == 0) {
             for (PermissionEnum permissionEnum : PermissionEnum.values()) {
                 Permission permission = Permission.builder()
@@ -45,11 +46,42 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
 
+        // Tạo Role và Gán Permission cụ thể
         if (roleRepository.count() == 0) {
+            // Role USER: Không có quyền quản trị
             createRole(RoleEnum.USER, Set.of());
+
+            // Role SUPER_ADMIN
             createRole(RoleEnum.SUPER_ADMIN, Set.of(PermissionEnum.values()));
+
+            // Role LIBRARY_MANAGER (Quản lý sách & Danh mục)
+            createRole(RoleEnum.LIBRARY_MANAGER, Set.of(
+                    PermissionEnum.BOOK_READ,
+                    PermissionEnum.BOOK_CREATE,
+                    PermissionEnum.BOOK_UPDATE,
+                    PermissionEnum.BOOK_DELETE,
+                    PermissionEnum.CATEGORY_MANAGE,
+                    PermissionEnum.AUTHOR_MANAGE,
+                    PermissionEnum.PUBLISHER_MANAGE
+            ));
+
+            // Role USER_MANAGER (Quản lý độc giả)
+            createRole(RoleEnum.USER_MANAGER, Set.of(
+                    PermissionEnum.USER_READ,
+                    PermissionEnum.USER_UPDATE,
+                    PermissionEnum.USER_BAN
+            ));
+
+            // Role CIRCULATION_MANAGER (Quản lý mượn trả & phạt)
+            createRole(RoleEnum.CIRCULATION_MANAGER, Set.of(
+                    PermissionEnum.LOAN_READ,
+                    PermissionEnum.LOAN_APPROVE,
+                    PermissionEnum.LOAN_RETURN,
+                    PermissionEnum.FINE_MANAGE
+            ));
         }
 
+        // Tạo tài khoản Admin mặc định
         if (!userRepository.existsByUsername("admin")) {
             Role adminRole = roleRepository.findByName(RoleEnum.SUPER_ADMIN).orElseThrow();
             User admin = User.builder()

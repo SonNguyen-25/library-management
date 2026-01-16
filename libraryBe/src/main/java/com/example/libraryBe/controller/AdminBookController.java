@@ -5,6 +5,7 @@ import com.example.libraryBe.entity.Book;
 import com.example.libraryBe.service.AdminBookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,23 +16,26 @@ public class AdminBookController {
     private final AdminBookService adminBookService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('BOOK_CREATE')")
     public ResponseEntity<Book> createBook(@RequestBody BookRequest request) {
         return ResponseEntity.ok(adminBookService.createBook(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOK_UPDATE')")
     public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody BookRequest request) {
         return ResponseEntity.ok(adminBookService.updateBook(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOK_DELETE')")
     public ResponseEntity<String> deleteBook(@PathVariable Long id) {
         adminBookService.deleteBook(id);
         return ResponseEntity.ok("Deleted book successfully");
     }
 
-    // POST /api/v1/admin/books/{id}/copies?amount=5
     @PostMapping("/{id}/copies")
+    @PreAuthorize("hasAuthority('BOOK_UPDATE')")
     public ResponseEntity<String> addCopies(
             @PathVariable Long id,
             @RequestParam int amount

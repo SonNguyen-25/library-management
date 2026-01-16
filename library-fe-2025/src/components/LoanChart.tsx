@@ -1,5 +1,5 @@
 import {
-    LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area
+    XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import type {ChartData} from "../services/dashboardService";
 

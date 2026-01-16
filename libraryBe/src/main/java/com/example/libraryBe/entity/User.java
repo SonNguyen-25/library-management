@@ -56,12 +56,15 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        Set<GrantedAuthority> authorities = new HashSet<>();
 
         for (Role role : roles) {
+            // Thêm Role
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().name()));
-            for (Permission permission : role.getPermissions()) {
-                authorities.add(new SimpleGrantedAuthority(permission.getName().name()));
+
+            // Thêm tất cả Permission của Role đó
+            for (Permission p : role.getPermissions()) {
+                authorities.add(new SimpleGrantedAuthority(p.getName().name()));
             }
         }
         return authorities;

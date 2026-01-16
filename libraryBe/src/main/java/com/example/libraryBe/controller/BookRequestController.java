@@ -5,6 +5,7 @@ import com.example.libraryBe.entity.BookRequest;
 import com.example.libraryBe.service.BookRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +19,8 @@ public class BookRequestController {
 
     private final BookRequestService requestService;
 
-    // POST /api/v1/requests/borrow
     @PostMapping("/borrow")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> createBorrowRequest(
             @RequestBody LoanRequest requestDTO,
             @AuthenticationPrincipal UserDetails userDetails
@@ -28,22 +29,22 @@ public class BookRequestController {
         return ResponseEntity.ok("Yêu cầu mượn sách đã được gửi thành công! Vui lòng chờ Admin duyệt.");
     }
 
-    // GET /api/v1/requests/my-requests
     @GetMapping("/my-requests")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<BookRequest>> getMyRequests(
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         return ResponseEntity.ok(requestService.getMyRequests(userDetails.getUsername()));
     }
-    // GET /api/v1/requests/admin/all
+
     @GetMapping("/admin/all")
+    @PreAuthorize("hasAuthority('LOAN_READ')")
     public ResponseEntity<List<BookRequest>> getAllRequests() {
         return ResponseEntity.ok(requestService.getAllRequests());
     }
 
-    // API Admin Approve/Deny
-    // PUT /api/v1/requests/admin/{id}?status=ACCEPTED
     @PutMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('LOAN_APPROVE')")
     public ResponseEntity<?> processRequest(
             @PathVariable Long id,
             @RequestParam String status
@@ -55,8 +56,9 @@ public class BookRequestController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    // DELETE /api/v1/requests/{id}
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> cancelRequest(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails

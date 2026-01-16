@@ -25,6 +25,7 @@ import FinesManage from "./pages/admin/FinesManage.tsx";
 import AuthorManage from "./pages/admin/AuthorManage.tsx";
 import CategoryManage from "./pages/admin/CategoryManage.tsx";
 import PublisherManage from "./pages/admin/PublisherManage.tsx";
+import AdminProfile from "./pages/admin/AdminProfile.tsx";
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -60,6 +61,7 @@ createRoot(document.getElementById('root')!).render(
                         <Route path="requests" element={<RequestsManage />} />
                         <Route path="loans" element={<LoansManage />} />
                         <Route path="fines" element={<FinesManage />} />
+                        <Route path="profile" element={<AdminProfile />} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -10,6 +10,7 @@ public enum PermissionEnum {
     // --- Quyền Quản lý Danh mục (Tác giả, NXB...) ---
     CATEGORY_MANAGE("Quản lý danh mục"),
     AUTHOR_MANAGE("Quản lý tác giả"),
+    PUBLISHER_MANAGE("Quản lý nhà xuất bản"),
 
     // --- Quyền Quản lý Độc giả (Dành cho User Manager) ---
     USER_READ("Xem danh sách người dùng"),

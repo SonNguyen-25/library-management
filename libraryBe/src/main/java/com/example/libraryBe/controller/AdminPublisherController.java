@@ -5,6 +5,7 @@ import com.example.libraryBe.entity.Publisher;
 import com.example.libraryBe.service.PublisherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -15,15 +16,25 @@ public class AdminPublisherController {
     private final PublisherService publisherService;
 
     @GetMapping
-    public ResponseEntity<List<Publisher>> getAll() { return ResponseEntity.ok(publisherService.getAllPublishers()); }
+    @PreAuthorize("hasAuthority('PUBLISHER_MANAGE')")
+    public ResponseEntity<List<Publisher>> getAll() {
+        return ResponseEntity.ok(publisherService.getAllPublishers());
+    }
 
     @PostMapping
-    public ResponseEntity<Publisher> create(@RequestBody SimpleRequest request) { return ResponseEntity.ok(publisherService.createPublisher(request)); }
+    @PreAuthorize("hasAuthority('PUBLISHER_MANAGE')")
+    public ResponseEntity<Publisher> create(@RequestBody SimpleRequest request) {
+        return ResponseEntity.ok(publisherService.createPublisher(request));
+    }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Publisher> update(@PathVariable Long id, @RequestBody SimpleRequest request) { return ResponseEntity.ok(publisherService.updatePublisher(id, request)); }
+    @PreAuthorize("hasAuthority('PUBLISHER_MANAGE')")
+    public ResponseEntity<Publisher> update(@PathVariable Long id, @RequestBody SimpleRequest request) {
+        return ResponseEntity.ok(publisherService.updatePublisher(id, request));
+    }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PUBLISHER_MANAGE')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         publisherService.deletePublisher(id);
         return ResponseEntity.ok().build();

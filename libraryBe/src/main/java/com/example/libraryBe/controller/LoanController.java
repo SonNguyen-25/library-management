@@ -4,6 +4,7 @@ import com.example.libraryBe.entity.BookLoan;
 import com.example.libraryBe.service.LoanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -17,23 +18,23 @@ public class LoanController {
 
     private final LoanService loanService;
 
-    // GET /api/v1/loans/my-loans?status=BORROWED
     @GetMapping("/my-loans")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<BookLoan>> getMyLoans(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(required = false) String status // Nhận tham số filter
+            @RequestParam(required = false) String status
     ) {
         return ResponseEntity.ok(loanService.getMyLoans(userDetails.getUsername(), status));
     }
 
-    // GET /api/v1/loans/admin/all
     @GetMapping("/admin/all")
+    @PreAuthorize("hasAuthority('LOAN_READ')")
     public ResponseEntity<List<BookLoan>> getAllLoans() {
         return ResponseEntity.ok(loanService.getAllLoans());
     }
 
-    // PUT /api/v1/loans/admin/return/{id}
     @PutMapping("/admin/return/{id}")
+    @PreAuthorize("hasAuthority('LOAN_RETURN')")
     public ResponseEntity<String> returnBook(@PathVariable Long id) {
         loanService.returnBook(id);
         return ResponseEntity.ok("Trả sách thành công!");
