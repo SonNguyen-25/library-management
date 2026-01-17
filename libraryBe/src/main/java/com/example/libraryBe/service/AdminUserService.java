@@ -7,6 +7,8 @@ import com.example.libraryBe.model.RoleEnum;
 import com.example.libraryBe.repository.RoleRepository;
 import com.example.libraryBe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,15 @@ public class AdminUserService {
             throw new RuntimeException("Email đã tồn tại!");
         }
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN_CREATE"));
+        if (!isSuperAdmin) {
+            String requestedRole = request.getRole().toUpperCase();
+            if (requestedRole.contains("ADMIN") || requestedRole.contains("MANAGER")) {
+                throw new RuntimeException("Bạn không đủ quyền để tạo tài khoản Quản trị viên!");
+            }
+        }
         Role role = getRoleByName(request.getRole());
 
         User user = User.builder()
@@ -58,6 +69,22 @@ public class AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN_CREATE"));
+
+        if (!isSuperAdmin) {
+            boolean isTargetPrivileged = user.getRoles().stream()
+                    .anyMatch(r -> r.getName() != RoleEnum.USER);
+
+            if (isTargetPrivileged) {
+                throw new RuntimeException("Bạn không đủ quyền để chỉnh sửa thông tin của Quản trị viên khác!");
+            }
+            String requestedRole = request.getRole().toUpperCase();
+            if (requestedRole.contains("ADMIN") || requestedRole.contains("MANAGER")) {
+                throw new RuntimeException("Bạn không được phép thăng cấp tài khoản lên Quản trị viên!");
+            }
+        }
         user.setName(request.getName());
         if (!request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {

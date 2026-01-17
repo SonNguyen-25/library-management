@@ -24,7 +24,7 @@ public class AdminUserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN_CREATE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     public ResponseEntity<User> createUser(@RequestBody UserRequest request) {
         return ResponseEntity.ok(adminUserService.createUser(request));
     }

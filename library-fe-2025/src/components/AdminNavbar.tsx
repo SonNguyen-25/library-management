@@ -104,13 +104,13 @@ export default function AdminNavbar({ selected = "dashboard" }: { selected?: str
 
                         <div className="w-px h-6 bg-gray-300 mx-2"></div>
 
-                        {/* 3. User Info & Profile Link (Đã đồng bộ) */}
+                        {/* 3. User Info & Profile Link */}
                         <div className="flex items-center gap-3 mr-2">
                             <span className="text-sm font-semibold text-gray-700 hidden lg:block">
                                 {user?.name || "Administrator"}
                             </span>
 
-                            {/* Avatar - Click để vào Profile */}
+                            {/* Avatar */}
                             <Link
                                 to="/admin/profile"
                                 className={`w-9 h-9 rounded-full border-2 overflow-hidden transition-all ${

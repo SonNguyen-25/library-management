@@ -88,7 +88,7 @@ export default function UserBookSearch() {
             <title>Search Books</title>
             <UserNavbar selected="search" />
 
-            <div className="min-h-screen bg-gray-50 p-6">
+            <div className="min-h-screen bg-blue-50 p-6">
                 <div className="max-w-7xl mx-auto">
 
                     {/* SEARCH & FILTER */}
@@ -114,7 +114,7 @@ export default function UserBookSearch() {
                                 value={selectedAuthor || ''}
                                 onChange={(e) => {
                                     setSelectedAuthor(e.target.value ? Number(e.target.value) : undefined);
-                                    setPage(1);
+                                    setPage(1); //reset về trang 1 khi lọc
                                 }}
                             >
                                 <option value="">All Authors</option>

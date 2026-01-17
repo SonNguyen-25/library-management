@@ -189,7 +189,12 @@ export default function UserDashboard() {
 
                         {/* RECOMMENDED BOOKS */}
                         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-blue-700 mb-4">Books You Might Like</h3>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-blue-700">Books You Might Like</h3>
+                                <Link to="/user/search" className="text-blue-600 hover:underline text-sm font-medium">
+                                    View all books →
+                                </Link>
+                            </div>
                             {books.length === 0 ? (
                                 <p className="text-gray-500 text-center">No books found.</p>
                             ) : (
